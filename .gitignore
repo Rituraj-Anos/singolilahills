@@ -1,0 +1,16 @@
+# dependencies and build output
+node_modules/
+.next/
+out/
+.vercel/
+
+# secrets: keep .env.example, never commit real values
+.env
+.env.*
+!.env.example
+
+# misc
+.DS_Store
+npm-debug.log*
+*.log
+*.pem

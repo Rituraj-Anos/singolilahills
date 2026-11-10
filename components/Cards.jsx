@@ -1,0 +1,95 @@
+import Link from 'next/link';
+import Icon from './Icon.jsx';
+import { dateLabel, money } from '../lib/format.js';
+
+export function TripCard({ pkg, headingLevel = 3 }) {
+  const H = `h${headingLevel}`;
+  return (
+    <Link href={`/packages/${pkg.slug}`} className="trip-card">
+      <img src={pkg.hero_image} alt="" loading="lazy" decoding="async" width="800" height="1000" />
+      <span className="shade" aria-hidden="true" />
+      <span className="chips">
+        <span className="chip">{pkg.duration_days} days</span>
+        {pkg.category && <span className="chip">{pkg.category}</span>}
+      </span>
+      <span className="body">
+        <small>{pkg.destination}</small>
+        <H>{pkg.title}</H>
+        <span className="foot">
+          <span className="price">
+            <small>from</small>
+            <strong>{money(pkg.price, pkg.currency)}</strong>
+          </span>
+          <span className="view" aria-hidden="true">
+            View trip
+          </span>
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+export function DestCard({ dest }) {
+  return (
+      <Link href={`/destinations/${dest.slug}`} className="dest-card">
+        <img src={dest.hero_image} alt="" loading="lazy" decoding="async" width="640" height="864" />
+        <span className="shade" aria-hidden="true" />
+        <span className="hover-veil" aria-hidden="true" />
+        <span className="caption">
+          <small>{dest.altitude}</small>
+          <strong>{dest.name}</strong>
+        </span>
+      </Link>
+  );
+}
+
+export function PostCard({ post }) {
+  return (
+    <Link href={`/blog/${post.slug}`} className="post-card" data-reveal>
+      <span className="cover">
+        <img src={post.image} alt="" loading="lazy" decoding="async" width="800" height="600" />
+      </span>
+      <span className="chips">
+        {post.category && <span className="chip chip-plain">{post.category}</span>}
+        {post.read_time && <span className="chip chip-plain">{post.read_time}</span>}
+      </span>
+      <h3>{post.title}</h3>
+      <p>{post.summary}</p>
+      <span className="sr-only">Published {dateLabel(post.published_at)}</span>
+    </Link>
+  );
+}
+
+export function ReviewCard({ review }) {
+  return (
+      <figure className="review-card">
+        <span className="stars" role="img" aria-label={`${review.rating || 5} out of 5`}>
+          {Array.from({ length: review.rating || 5 }, (_, i) => (
+            <Icon key={i} name="star" />
+          ))}
+        </span>
+        <blockquote>{review.comment}</blockquote>
+        <figcaption>
+          <strong>{review.author}</strong>
+          {review.circuit}
+        </figcaption>
+      </figure>
+  );
+}
+
+export function ReelCard({ reel }) {
+  return (
+    <a className="reel" href={reel.reel_url} target="_blank" rel="noopener noreferrer">
+      <img src={reel.thumbnail} alt="" loading="lazy" decoding="async" width="360" height="640" />
+      <span className="shade" aria-hidden="true" />
+      <span className="play" aria-hidden="true">
+        <Icon name="play" />
+      </span>
+      <span className="caption">
+        <strong>{reel.title}</strong>
+        <br />
+        <small>{reel.destination}, on Instagram</small>
+      </span>
+    </a>
+  );
+}
