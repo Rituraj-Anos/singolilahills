@@ -156,6 +156,22 @@ export function Field({ field: f, value, onChange, error, values, idPrefix = 'f'
     case 'repeater':
       input = <Repeater field={f} value={value} onChange={onChange} />;
       break;
+    case 'checkboxes': {
+      const picked = Array.isArray(value) ? value : [];
+      // keep the saved order the same as the options order
+      const next = (v, on) => f.options.map((o) => o.value).filter((x) => (x === v ? on : picked.includes(x)));
+      input = (
+        <div className="adm-checks" role="group" aria-label={f.label}>
+          {f.options.map((o) => (
+            <label key={o.value} className="adm-check-pill">
+              <input type="checkbox" checked={picked.includes(o.value)} onChange={(e) => onChange(next(o.value, e.target.checked))} />
+              {o.label}
+            </label>
+          ))}
+        </div>
+      );
+      break;
+    }
     case 'slug':
       input = (
         <div className="adm-inline">
@@ -173,7 +189,7 @@ export function Field({ field: f, value, onChange, error, values, idPrefix = 'f'
         <input {...common} className="adm-input" type={f.type === 'url' ? 'url' : 'text'} value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
       );
   }
-  const isGroup = ['repeater', 'images'].includes(f.type);
+  const isGroup = ['repeater', 'images', 'checkboxes'].includes(f.type);
   return (
     <div className="adm-field">
       {isGroup ? <p className="adm-label">{f.label}</p> : <label htmlFor={id} className="adm-label">{f.label}{f.required && <span aria-hidden="true"> *</span>}</label>}

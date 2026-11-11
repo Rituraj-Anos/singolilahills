@@ -7,6 +7,7 @@ import { BLOGS } from '../lib/data/blogs.js';
 import { REELS } from '../lib/data/reels.js';
 import { REVIEWS } from '../lib/data/reviews.js';
 import { DEFAULT_SETTINGS, FAQS } from '../lib/data/settings.js';
+import { PLANNER_META } from '../lib/data/planner-meta.js';
 
 // dollar-quoting with a tag that never appears in the data keeps the JSON exactly as is
 const lit = (v) => {
@@ -21,7 +22,7 @@ const insert = (table, rows) =>
     rows.map((r) => ({ created_at: now, updated_at: now, ...r }))
   )}) on conflict (id) do nothing;`;
 
-const packages = PACKAGES.map((p, i) => ({ ...p, published: true, sort_order: i }));
+const packages = PACKAGES.map((p, i) => ({ ...p, ...(PLANNER_META[p.slug] || {}), published: true, sort_order: i }));
 const destinations = DESTINATIONS.map((d, i) => ({ ...d, published: true, sort_order: i }));
 const posts = BLOGS.map(({ date, ...b }) => ({ ...b, published_at: date, published: true }));
 const reels = REELS.map(({ reelUrl, ...r }, i) => ({ ...r, reel_url: reelUrl, sort_order: i, published: false }));

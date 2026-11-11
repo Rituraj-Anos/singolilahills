@@ -2497,3 +2497,248 @@ p {
     text-decoration: none;
   }
 }
+
+/* ---------- Trip planner ---------- */
+.planner-top {
+  display: grid;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-6);
+  color: var(--c-muted);
+  font-size: var(--fs-small);
+}
+.planner-progress {
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--c-sand);
+  overflow: hidden;
+}
+.planner-progress span {
+  display: block;
+  height: 100%;
+  background: var(--c-accent);
+  transform-origin: left;
+  transition: transform var(--dur) var(--ease-out);
+}
+.planner-title {
+  font-family: var(--f-display);
+  font-weight: 600;
+  color: var(--c-ink);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+}
+.planner-title:focus-visible {
+  outline-offset: 6px;
+  border-radius: var(--r-inner);
+}
+.planner-hint {
+  margin-top: var(--sp-2);
+  margin-bottom: var(--sp-5);
+  color: var(--c-muted);
+}
+.planner-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-top: var(--sp-6);
+}
+.planner-actions > .btn:last-child:not(:only-child) {
+  margin-left: auto;
+}
+.planner .field select {
+  appearance: auto;
+}
+.dest-picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--sp-3);
+}
+.dest-pick {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-inner);
+  overflow: hidden;
+  background: var(--c-teal);
+  box-shadow: inset 0 0 0 2px transparent;
+  cursor: pointer;
+}
+.dest-pick input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.dest-pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dest-pick::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, var(--c-ink-78) 0%, var(--c-ink-00) 60%);
+}
+.dest-pick-name {
+  position: absolute;
+  left: var(--sp-3);
+  right: var(--sp-3);
+  bottom: var(--sp-3);
+  z-index: 1;
+  color: var(--c-on-dark);
+  font-weight: 500;
+  line-height: 1.25;
+}
+.dest-pick-tick {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--c-sun);
+  color: var(--c-ink);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition:
+    opacity var(--dur-fast) ease,
+    transform var(--dur) var(--ease-out);
+}
+.dest-pick-tick svg {
+  width: 16px;
+  height: 16px;
+}
+.dest-pick:has(input:checked) {
+  box-shadow: inset 0 0 0 3px var(--c-sun);
+}
+.dest-pick:has(input:checked) .dest-pick-tick {
+  opacity: 1;
+  transform: none;
+}
+.dest-pick:has(input:focus-visible) {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+.plan-summary {
+  margin: var(--sp-5) 0 var(--sp-7);
+  padding: 0;
+  border-top: 1px solid var(--c-line);
+}
+.plan-summary > div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: var(--sp-3);
+  align-items: baseline;
+  padding-block: var(--sp-3);
+  border-bottom: 1px solid var(--c-line);
+}
+.plan-summary dt {
+  color: var(--c-muted);
+}
+.plan-summary dd {
+  margin: 0;
+  color: var(--c-ink);
+  font-weight: 500;
+}
+.linklike {
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  color: var(--c-teal);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.match-list {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+.match {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3);
+  border-radius: var(--r-inner);
+  border: 1px solid var(--c-line-strong);
+  background: var(--c-card);
+}
+.match:has(input:checked) {
+  border-color: var(--c-teal);
+  box-shadow: inset 0 0 0 1px var(--c-teal);
+}
+.match:has(input:focus-visible) {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+.planner .match-pick {
+  /* beats the form label styles (.field label) so the card stays a row */
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+  cursor: pointer;
+}
+.match-pick input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--c-teal);
+}
+.match-pick img {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  border-radius: var(--r-inner);
+  object-fit: cover;
+}
+.match-body {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.match-body strong {
+  color: var(--c-ink);
+  line-height: 1.3;
+}
+.match-body small {
+  color: var(--c-muted);
+}
+.chip-warn {
+  background: var(--c-sun-soft);
+}
+@media (max-width: 600px) {
+  .plan-summary > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .plan-summary dt {
+    grid-column: 1 / -1;
+  }
+  .match {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .match .text-link {
+    align-self: flex-start;
+    padding-left: var(--sp-3);
+  }
+}
+@media (max-width: 900px) {
+  .form-shell > .side {
+    order: 2;
+  }
+}

@@ -7,7 +7,8 @@
    1. `supabase/migrations/01_initial_schema.sql`
    2. `supabase/migrations/02_cms_and_security.sql`
    3. `supabase/migrations/03_review_submissions.sql`
-   4. `supabase/seed.sql` (loads today's trips, destinations, stories and FAQs; sample reviews and reels arrive hidden)
+   4. `supabase/migrations/04_planner.sql`
+   5. `supabase/seed.sql` (loads today's trips, destinations, stories and FAQs; sample reviews and reels arrive hidden)
 3. Authentication > Users > Add user. Enter the owner's email and a strong password (10+ characters).
 4. Authentication > Sign In / Providers: turn **off** "Allow new users to sign up". Otherwise strangers can create accounts.
 5. SQL editor, make the owner an admin (change the email):
@@ -23,15 +24,16 @@
 
 | Section | What it controls |
 |---|---|
-| Enquiries | Every form submission. Open one to call, WhatsApp or email, set a status, add private notes, export to Excel (CSV). |
+| Enquiries | Every trip plan a traveller sends: where, when, who, budget and interests, plus the trips we suggested. Open one to call, WhatsApp or email, set a status, pick a follow-up date (it appears under the Follow up tab that day), add private notes, and export to Excel (CSV). Filter by month and budget. A note appears when the same phone number enquired in the last 30 days. |
 | Trips | Name, price, days, photos, day-by-day itinerary (each day can have its own photo), included and excluded lists, questions. Give each day an altitude like `2,970 m` and the website draws the altitude chart by itself. Every trip page has a Download itinerary (PDF) button that builds the PDF from this same information. |
+| Trips: Planner matching | On each trip, tick the good months, who it suits and its interests. The trip planner on the website uses these to suggest trips, and warns when a trip is out of season for the month a traveller picked. Review the starting choices; they are a first draft. |
 | Destinations | Places, best season, altitude, what you will see, which trips go there. |
 | Journal | Stories with a cover photo and text. |
 | Reviews | Add only real, permitted reviews. Hidden until ticked "Show on website". These fill the moving review rows on the home page. |
 | Review requests | Reviews that travellers write at `/share-your-trip` wait here. Press Publish for real ones, Reject for the rest. Their phone or email is private and only shown here. |
 | Instagram reels | Link, cover image, destination. |
 | FAQs | Questions shown on the home and about pages. |
-| Site settings | Phone, WhatsApp, email, social links, home page headline and photos, about page, privacy and terms, search and share text. |
+| Site settings | Phone, WhatsApp, email, social links, home page headline and photos, about page, privacy and terms, search and share text, and the budget choices shown in the trip planner (prices per person). |
 | Subscribers | Newsletter emails, export to CSV. |
 
 Every item has **Show on website**. Unticking hides it without deleting it. Changes appear on the main pages as soon as you press Save; other pages follow within 5 minutes.

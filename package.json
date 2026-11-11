@@ -1,20 +1,21 @@
 {
-    "name": "shingolia-hills",
-    "version": "1.0.0",
-    "description": "Shingolia Hills: Himalayan journeys website with admin panel",
-    "scripts": {
-        "dev": "next dev",
-        "build": "next build",
-        "start": "next start",
-        "format": "prettier --write ."
-    },
-    "dependencies": {
-        "@supabase/supabase-js": "^2.119.0",
-        "next": "^15.0.0",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0"
-    },
-    "devDependencies": {
-        "prettier": "^3.0.0"
-    }
+  "name": "shingolia-hills",
+  "version": "1.0.0",
+  "description": "Shingolia Hills: Himalayan journeys website with admin panel",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "format": "prettier --write .",
+    "test": "node --test lib/match.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
+    "next": "^15.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
 }

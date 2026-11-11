@@ -5,15 +5,38 @@ import { supabase } from '../../lib/supabase.js';
 import { ENQUIRY_STATUSES } from '../../lib/admin/collections.js';
 import { download, toCsv } from '../../lib/admin/api.js';
 import { telLink, waLink } from '../../lib/format.js';
+import { INTERESTS, LENGTHS, TRAVELLERS, monthLabel } from '../../lib/planner.mjs';
 
-const COLS = ['created_at', 'name', 'phone', 'email', 'package_interest', 'travel_dates', 'group_size', 'notes', 'status', 'admin_notes'];
+const COLS = [
+  'created_at', 'name', 'phone', 'email', 'package_interest', 'destinations', 'travel_dates', 'trip_length', 'group_size',
+  'travelling_with', 'budget_label', 'interests', 'matched_trips', 'notes', 'status', 'follow_up_on', 'admin_notes',
+];
 
-function Drawer({ item, onClose, onSaved, toast }) {
+const labelOf = (set, id) => set.find((x) => x.id === id)?.label || id;
+const today = () => new Date().toISOString().slice(0, 10);
+const digits = (p) => String(p || '').replace(/\D/g, '').slice(-10);
+const monthKey = (r) => (r.travel_month ? r.travel_month.slice(0, 7) : '');
+const isOverdue = (r) => r.follow_up_on && r.follow_up_on <= today() && ['new', 'contacted'].includes(r.status);
+
+// A readable summary of the planner answers, for the drawer and the CSV
+function planRows(r) {
+  return [
+    ['Where', r.destinations?.join(', ')],
+    ['When', [r.travel_dates, r.trip_length && labelOf(LENGTHS, r.trip_length)].filter(Boolean).join(', ')],
+    ['Travelling as', r.travelling_with && labelOf(TRAVELLERS, r.travelling_with)],
+    ['Group', r.group_size],
+    ['Budget per person', r.budget_label],
+    ['Interests', r.interests?.map((i) => labelOf(INTERESTS, i)).join(', ')],
+    ['Trips suggested', r.matched_trips?.join(', ')],
+  ].filter(([, v]) => v);
+}
+
+function Drawer({ item, repeats, onClose, onSaved, toast }) {
   const [status, setStatus] = useState(item.status);
   const [notes, setNotes] = useState(item.admin_notes || '');
+  const [followUp, setFollowUp] = useState(item.follow_up_on || '');
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    if (!supabase) return; // AdminShell shows the setup screen
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -21,7 +44,12 @@ function Drawer({ item, onClose, onSaved, toast }) {
 
   async function save() {
     setBusy(true);
-    const { data, error } = await supabase.from('inquiries').update({ status, admin_notes: notes }).eq('id', item.id).select().single();
+    const { data, error } = await supabase
+      .from('inquiries')
+      .update({ status, admin_notes: notes, follow_up_on: followUp || null })
+      .eq('id', item.id)
+      .select()
+      .single();
     setBusy(false);
     if (error) return toast(error.message, true);
     onSaved(data);
@@ -36,6 +64,7 @@ function Drawer({ item, onClose, onSaved, toast }) {
   }
   const wa = waLink(item.phone, `Hi ${item.name}, thank you for your enquiry about ${item.package_interest || 'a trip'}.`);
   const tel = telLink(item.phone);
+  const plan = planRows(item);
   return (
     <aside className="adm-drawer" aria-labelledby="drawer-title">
       <div className="adm-row-between">
@@ -45,6 +74,12 @@ function Drawer({ item, onClose, onSaved, toast }) {
         </button>
       </div>
       <p className="adm-hint">Received {new Date(item.created_at).toLocaleString('en-IN')}</p>
+      {repeats.length > 0 && (
+        <p className="adm-note" role="note">
+          This phone number has enquired {repeats.length} other time{repeats.length === 1 ? '' : 's'} in the last 30 days (
+          {repeats.map((r) => new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })).join(', ')}). It may be the same traveller.
+        </p>
+      )}
       <div className="adm-inline">
         {wa && (
           <a className="adm-btn" href={wa} target="_blank" rel="noopener noreferrer">
@@ -65,14 +100,16 @@ function Drawer({ item, onClose, onSaved, toast }) {
       <dl className="adm-dl">
         <dt>Trip</dt>
         <dd>{item.package_interest || '-'}</dd>
-        <dt>When</dt>
-        <dd>{item.travel_dates || '-'}</dd>
-        <dt>Travellers</dt>
-        <dd>{item.group_size || '-'}</dd>
         <dt>Phone</dt>
         <dd>{item.phone}</dd>
         <dt>Email</dt>
         <dd>{item.email || '-'}</dd>
+        {plan.map(([k, v]) => (
+          <div key={k} style={{ display: 'contents' }}>
+            <dt>{k}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))}
       </dl>
       {item.notes && (
         <>
@@ -91,6 +128,13 @@ function Drawer({ item, onClose, onSaved, toast }) {
             </option>
           ))}
         </select>
+      </div>
+      <div className="adm-field">
+        <label className="adm-label" htmlFor="follow_up">
+          Follow up on
+        </label>
+        <p className="adm-hint">It shows under the Follow up tab on that day.</p>
+        <input id="follow_up" type="date" className="adm-input adm-short" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
       </div>
       <div className="adm-field">
         <label className="adm-label" htmlFor="admin_notes">
@@ -116,11 +160,13 @@ function Enquiries() {
   const [rows, setRows] = useState(null);
   const [tab, setTab] = useState('new');
   const [q, setQ] = useState('');
+  const [month, setMonth] = useState('');
+  const [budget, setBudget] = useState('');
   const [openId, setOpenId] = useState(null);
   const [toastNode, toast] = useToast();
 
   useEffect(() => {
-    if (!supabase) return; // AdminShell shows the setup screen
+    if (!supabase) return;
     supabase
       .from('inquiries')
       .select('*')
@@ -130,7 +176,6 @@ function Enquiries() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    if (!supabase) return; // AdminShell shows the setup screen
     if (typeof router.query.open === 'string') {
       setOpenId(router.query.open);
       setTab('all');
@@ -138,43 +183,91 @@ function Enquiries() {
   }, [router.query.open]);
 
   const counts = useMemo(() => {
-    const c = { all: rows?.length || 0 };
-    for (const r of rows || []) c[r.status] = (c[r.status] || 0) + 1;
+    const c = { all: rows?.length || 0, follow: 0 };
+    for (const r of rows || []) {
+      c[r.status] = (c[r.status] || 0) + 1;
+      if (isOverdue(r)) c.follow += 1;
+    }
     return c;
   }, [rows]);
+  const months = useMemo(() => [...new Set((rows || []).map(monthKey).filter(Boolean))].sort(), [rows]);
+  const budgets = useMemo(() => [...new Set((rows || []).map((r) => r.budget_label).filter(Boolean))], [rows]);
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase();
     return (rows || []).filter(
-      (r) => (tab === 'all' || r.status === tab) && (!term || [r.name, r.phone, r.email, r.package_interest].some((v) => (v || '').toLowerCase().includes(term)))
+      (r) =>
+        (tab === 'all' || (tab === 'follow' ? isOverdue(r) : r.status === tab)) &&
+        (!month || monthKey(r) === month) &&
+        (!budget || r.budget_label === budget) &&
+        (!term || [r.name, r.phone, r.email, r.package_interest, ...(r.destinations || [])].some((v) => (v || '').toLowerCase().includes(term)))
     );
-  }, [rows, tab, q]);
+  }, [rows, tab, q, month, budget]);
   const open = rows?.find((r) => r.id === openId);
+  const repeats = useMemo(() => {
+    if (!open) return [];
+    const cutoff = new Date(open.created_at).getTime() - 30 * 86400000;
+    return (rows || []).filter((r) => r.id !== open.id && digits(r.phone) === digits(open.phone) && new Date(r.created_at).getTime() >= cutoff);
+  }, [rows, open]);
   const onSaved = useCallback((row, deletedId) => {
     setRows((rs) => (deletedId ? rs.filter((r) => r.id !== deletedId) : rs.map((r) => (r.id === row.id ? row : r))));
     if (deletedId) setOpenId(null);
   }, []);
 
+  const exportCsv = () => {
+    const flat = shown.map((r) => ({
+      ...r,
+      destinations: (r.destinations || []).join('; '),
+      interests: (r.interests || []).map((i) => labelOf(INTERESTS, i)).join('; '),
+      matched_trips: (r.matched_trips || []).join('; '),
+      trip_length: r.trip_length ? labelOf(LENGTHS, r.trip_length) : '',
+      travelling_with: r.travelling_with ? labelOf(TRAVELLERS, r.travelling_with) : '',
+    }));
+    download(`enquiries-${today()}.csv`, toCsv(flat, COLS));
+  };
+
   return (
     <AdminShell
       title="Enquiries"
       actions={
-        <button className="adm-btn adm-btn-quiet" type="button" onClick={() => download(`enquiries-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(shown, COLS))} disabled={!shown.length}>
+        <button className="adm-btn adm-btn-quiet" type="button" onClick={exportCsv} disabled={!shown.length}>
           Export CSV
         </button>
       }
     >
       <div className="adm-toolbar">
         <div className="adm-tabs" role="tablist" aria-label="Filter by status">
-          {[{ value: 'all', label: 'All' }, ...ENQUIRY_STATUSES].map((s) => (
+          {[{ value: 'all', label: 'All' }, ...ENQUIRY_STATUSES, { value: 'follow', label: 'Follow up' }].map((s) => (
             <button key={s.value} role="tab" type="button" aria-selected={tab === s.value} onClick={() => setTab(s.value)}>
-              {s.label} <span>{counts[s.value] || 0}</span>
+              {s.label} <span className={s.value === 'follow' && counts.follow ? 'adm-follow' : undefined}>{counts[s.value] || 0}</span>
             </button>
           ))}
         </div>
-        <label className="sr-only" htmlFor="search">
-          Search enquiries
-        </label>
-        <input id="search" className="adm-input adm-search" placeholder="Search name, phone or trip" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="adm-inline">
+          <label className="sr-only" htmlFor="f-month">
+            Filter by travel month
+          </label>
+          <select id="f-month" className="adm-input adm-short" value={month} onChange={(e) => setMonth(e.target.value)}>
+            <option value="">Any month</option>
+            {months.map((m) => (
+              <option key={m} value={m}>
+                {monthLabel(m)}
+              </option>
+            ))}
+          </select>
+          <label className="sr-only" htmlFor="f-budget">
+            Filter by budget
+          </label>
+          <select id="f-budget" className="adm-input adm-short" value={budget} onChange={(e) => setBudget(e.target.value)}>
+            <option value="">Any budget</option>
+            {budgets.map((b) => (
+              <option key={b}>{b}</option>
+            ))}
+          </select>
+          <label className="sr-only" htmlFor="search">
+            Search enquiries
+          </label>
+          <input id="search" className="adm-input adm-search" placeholder="Search name, phone or trip" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
       </div>
       <div className={`adm-split${open ? ' has-drawer' : ''}`}>
         <div className="adm-card adm-flush">
@@ -188,7 +281,7 @@ function Enquiries() {
                   <th>Phone</th>
                   <th>Trip</th>
                   <th>When</th>
-                  <th>Group</th>
+                  <th>Budget</th>
                   <th>Status</th>
                   <th>Received</th>
                 </tr>
@@ -204,9 +297,10 @@ function Enquiries() {
                     <td>{r.phone}</td>
                     <td>{r.package_interest || '-'}</td>
                     <td>{r.travel_dates || '-'}</td>
-                    <td>{r.group_size || '-'}</td>
+                    <td>{r.budget_label || '-'}</td>
                     <td>
                       <span className={`adm-pill s-${r.status}`}>{r.status}</span>
+                      {isOverdue(r) && <span className="adm-follow"> follow up</span>}
                     </td>
                     <td>{new Date(r.created_at).toLocaleDateString('en-IN')}</td>
                   </tr>
@@ -218,7 +312,7 @@ function Enquiries() {
           )}
         </div>
         {/* keyed so switching enquiries starts the form fresh */}
-        {open && <Drawer key={open.id} item={open} onClose={() => setOpenId(null)} onSaved={onSaved} toast={toast} />}
+        {open && <Drawer key={open.id} item={open} repeats={repeats} onClose={() => setOpenId(null)} onSaved={onSaved} toast={toast} />}
       </div>
       {toastNode}
     </AdminShell>

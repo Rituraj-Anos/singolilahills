@@ -662,3 +662,36 @@ textarea.adm-tall {
   margin-top: var(--sp-2);
   gap: var(--sp-4);
 }
+
+/* checkbox groups (trip planner matching) */
+.adm-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.adm-check-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-line-strong);
+  background: var(--c-cream);
+  cursor: pointer;
+}
+.adm-check-pill input {
+  accent-color: var(--c-teal);
+}
+.adm-check-pill:has(input:checked) {
+  border-color: var(--c-teal);
+  background: var(--c-sand);
+}
+.adm-check-pill:has(input:focus-visible) {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+.adm-follow {
+  color: var(--c-danger);
+  font-weight: 500;
+}

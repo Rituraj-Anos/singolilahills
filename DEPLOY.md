@@ -63,7 +63,7 @@ The forms have a hidden trap field and server checks, but no per-visitor rate li
 ## 6. Test the live site (10 minutes)
 
 1. Open the live site on a phone. Check the WhatsApp button opens the right number.
-2. Send a test enquiry. It should appear in `/admin/enquiries`.
+2. Plan a test trip at `/book-a-trip` and send it. It should appear in `/admin/enquiries` with all the answers.
 3. Send a test review at `/share-your-trip`. It should appear in `/admin/review-requests`; publish it and check it shows on the home page.
 4. Sign in at `/admin`, change a trip's price, press Save, and confirm the public page updates within a few seconds.
 5. Upload a photo in a trip and check it shows on the site.

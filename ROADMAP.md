@@ -8,6 +8,7 @@ Estimates are rough developer-days for one person who knows this codebase. They 
 
 - **Moving review rows** on the home page (two rows, opposite directions, pause on hover). Built, but it only shows once at least one review is published, because the sample reviews were never confirmed as real.
 - **Traveller reviews:** `/share-your-trip` form, held in `review_submissions`, approved in the admin under Review requests. No review appears without the owner's approval.
+- **Trip planner (phase 1, built):** `/book-a-trip` is now a five-step planner (where, when, who, budget, interests) that suggests up to three trips and sends the plan as an enquiry or on WhatsApp. The plan lives in the URL, so a refresh keeps it. Matching is in `lib/match.mjs` with 14 unit tests (`npm test`); out-of-season trips rank lower. The enquiries inbox shows the answers, has month and budget filters, a follow-up date with an overdue tab, and a repeat-phone-number warning. Migration `04_planner.sql`. Saving to a live database is untested until Supabase exists.
 - **Itinerary PDF:** every trip has a print-ready itinerary page (all facts, altitude chart, every day, photos, inclusions, permits, questions, price and contact). The button uses the browser's Save as PDF. Each itinerary day can now have its own photo.
 - **Deployment:** Vercel plus Supabase plus UptimeRobot, steps in `DEPLOY.md`. Photos stay in Supabase Storage; Cloudflare R2 is postponed.
 
