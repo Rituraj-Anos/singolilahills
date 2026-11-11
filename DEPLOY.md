@@ -38,8 +38,9 @@ git push -u origin main
 3. Settings > Environment Variables. Add the values from `.env.example`:
    - `NEXT_PUBLIC_SITE_URL` (the final address, no trailing slash)
    - `NEXT_PUBLIC_WHATSAPP_NUMBER` (the client's real number)
-   - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` (secret: never prefix it with `NEXT_PUBLIC_`)
+   - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - `SUPABASE_SECRET_KEY` (secret: never prefix it with `NEXT_PUBLIC_`)
+   - Where to find these three values: `ADMIN-GUIDE.md`, Part C.
    - optional: `RESEND_API_KEY`, `NOTIFY_EMAIL`
 4. Deploy. If you used a temporary address, change `NEXT_PUBLIC_SITE_URL` to the real domain and redeploy.
 5. Supabase > Authentication > URL configuration: set the Site URL to the live address and add `https://YOUR-SITE/admin/reset` to the Redirect URLs, so password-reset emails work.

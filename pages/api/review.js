@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
   const db = serviceClient();
   if (!db) {
-    console.error('[review] SUPABASE_SERVICE_ROLE_KEY or URL missing; review not stored');
+    console.error('[review] SUPABASE_SECRET_KEY or URL missing; review not stored');
     return res.status(503).json({ error: 'Reviews are not set up yet. Please try again later.' });
   }
   const { error } = await db.from('review_submissions').insert(row);

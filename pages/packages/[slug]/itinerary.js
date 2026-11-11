@@ -5,7 +5,7 @@ import Icon from '../../../components/Icon.jsx';
 import { Seo } from '../../../components/Layout.jsx';
 import { AltitudeStrip } from '../../../components/Sections.jsx';
 import { getPackage, getPackages, pageProps } from '../../../lib/content.js';
-import { money } from '../../../lib/format.js';
+import { money, waNumber } from '../../../lib/format.js';
 
 function Ticks({ items, cross }) {
   if (!items?.length) return null;
@@ -46,7 +46,7 @@ export default function Itinerary({ settings: s, pkg }) {
     ['Pickup and drop', pkg.pickup_drop],
     ['Vehicle', pkg.vehicle],
   ].filter(([, v]) => v);
-  const contact = [s.phone, s.whatsapp && `WhatsApp +${String(s.whatsapp).replace(/\D/g, '')}`, s.email].filter(Boolean);
+  const contact = [s.phone, s.whatsapp && `WhatsApp +${waNumber(s.whatsapp)}`, s.email].filter(Boolean);
 
   return (
     <>

@@ -24,8 +24,8 @@ function NotConfigured() {
       <div className="adm-card adm-narrow">
         <h1>Connect the database first</h1>
         <p>
-          The admin panel needs Supabase. Add <code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> and{' '}
-          <code>SUPABASE_SERVICE_ROLE_KEY</code> to the environment, run the SQL in <code>supabase/migrations</code>, then reload.
+          The admin panel needs Supabase. Add <code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code> and{' '}
+          <code>SUPABASE_SECRET_KEY</code> to the environment, run the SQL in <code>supabase/migrations</code>, then reload.
           The steps are in <code>ADMIN-GUIDE.md</code>.
         </p>
       </div>

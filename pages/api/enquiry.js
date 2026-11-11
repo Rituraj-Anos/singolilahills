@@ -53,7 +53,7 @@ export default async function handler(req, res) {
 
   const db = serviceClient();
   if (!db) {
-    console.error('[enquiry] SUPABASE_SERVICE_ROLE_KEY or URL missing; enquiry not stored');
+    console.error('[enquiry] SUPABASE_SECRET_KEY or URL missing; enquiry not stored');
     return res.status(503).json({ error: 'Online enquiries are not set up yet. Please message us on WhatsApp.' });
   }
   const { error } = await db.from('inquiries').insert(row);

@@ -1,24 +1,70 @@
 # Shingolia Hills website: setup and admin guide
 
-## One-time setup (developer, about 20 minutes)
+## One-time setup (about 30 minutes, once)
 
-1. Create a free project at supabase.com.
-2. Supabase dashboard > SQL editor. Run these files, in order:
+You will use two places: the **Supabase dashboard** in your browser (supabase.com), and the file **`.env.local`** in this folder.
+
+### Part A: create the database
+
+1. Go to supabase.com, sign in, and press **New project**. Pick the **Mumbai** region (it cannot be changed later). Save the database password somewhere safe. Wait until the project finishes setting up.
+2. In the left menu open **SQL Editor**. Press **New query**. For each file below, open it on your computer, copy everything inside, paste it into the editor and press **Run**. Do them in this order, and wait for "Success" each time:
    1. `supabase/migrations/01_initial_schema.sql`
    2. `supabase/migrations/02_cms_and_security.sql`
    3. `supabase/migrations/03_review_submissions.sql`
    4. `supabase/migrations/04_planner.sql`
    5. `supabase/seed.sql` (loads today's trips, destinations, stories and FAQs; sample reviews and reels arrive hidden)
-3. Authentication > Users > Add user. Enter the owner's email and a strong password (10+ characters).
-4. Authentication > Sign In / Providers: turn **off** "Allow new users to sign up". Otherwise strangers can create accounts.
-5. SQL editor, make the owner an admin (change the email):
+
+### Part B: create the owner's login
+
+3. Left menu **Authentication**, then **Users**, then **Add user**, then **Create new user**. Type the owner's email and a strong password (10 or more characters). If you see a switch called **Auto Confirm User**, turn it on. Press **Create user**.
+4. Left menu **Authentication**, then **Sign In / Providers** (the name may be **Sign In / Up**). Turn **off** "Allow new users to sign up". If you skip this, strangers can create accounts.
+5. Make that user an admin. Back in **SQL Editor**, press **New query**, paste this, **change `owner@example.com` to the exact email from step 3**, and press **Run**:
    ```sql
    insert into public.admins (user_id, name)
    select id, 'Owner' from auth.users where email = 'owner@example.com'
    on conflict do nothing;
    ```
-6. Copy `.env.example` to `.env.local` and fill in the Supabase URL, anon key and service role key (Project settings > API). Set the same values on the host.
-7. `npm install`, `npm run build`, deploy. The admin is at `/admin`.
+   Check it worked: run `select * from public.admins;`. You should see one row. If the table is empty, the email did not match step 3; fix it and run again.
+
+   **Easier way, no SQL (do it after Part C):** in a terminal inside the website folder run
+   `npm run make-admin -- owner@example.com "Owner name"`
+   It asks for a password (typing is hidden), then creates the login, confirms the email and makes it an admin. Run it again any time to set a new password for the same email.
+
+### Part C: connect the site to Supabase (the `.env.local` file)
+
+The site finds your database through three values. They go in the file `.env.local`, in the same folder as `package.json`. If the file does not exist, copy `.env.example` and rename the copy to `.env.local`.
+
+6. In the Supabase dashboard open your project and press the green **Connect** button at the top, or open **Settings** (gear icon, bottom left) then **API Keys**. Copy these three values into `.env.local`, with no spaces, no quotes, and nothing after the `=` other than the value:
+
+   | Line in `.env.local` | What to paste | Looks like | Secret? |
+   |---|---|---|---|
+   | `NEXT_PUBLIC_SUPABASE_URL=` | **Project URL** | `https://abcdefghijkl.supabase.co` | No |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=` | **Publishable key** | `sb_publishable_...` | No, this one is meant to be public |
+   | `SUPABASE_SECRET_KEY=` | **Secret key** (press the eye icon or Reveal to see it) | `sb_secret_...` | **Yes. Never share it, never post it in a chat, never commit it.** |
+
+   Example of a finished file (these values are made up):
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijkl.supabase.co
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_AbC123...
+   SUPABASE_SECRET_KEY=sb_secret_XyZ789...
+   NEXT_PUBLIC_WHATSAPP_NUMBER=919830012345
+   ```
+   **Watch the names.** The Connect dialog gives you a ready-made snippet with the names `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. This site reads them as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (with `NEXT_PUBLIC_` in front), and it ignores the shorter names. If /admin says "Connect the database first", this is almost always why. Any other line from the snippet, such as `SUPABASE_JWKS_URL`, is not needed.
+
+   For the WhatsApp number, 10 digits is enough (the site adds the Indian country code 91); other countries need the country code, digits only.
+
+   Older Supabase projects show **anon** and **service_role** keys instead. Those work too: put the anon key on a line `NEXT_PUBLIC_SUPABASE_ANON_KEY=` and the service_role key on `SUPABASE_SERVICE_ROLE_KEY=`.
+
+   Also set `NEXT_PUBLIC_WHATSAPP_NUMBER` to the real number: country code and digits only, no `+` and no spaces.
+7. Check it on your computer: run `npm install`, then `npm run dev`, open http://localhost:3000/admin/login and sign in with the email and password from step 3. If you reach the Overview screen, it works. After changing `.env.local`, stop the server (Ctrl+C) and start it again.
+8. The same three values must also be added on the host. In Vercel: your project, **Settings**, **Environment Variables**, add each name and value, then redeploy. Details in `DEPLOY.md`.
+
+### If a step fails
+
+- "Connect the database first" on /admin: the three values are missing or have a typo; restart `npm run dev` after editing `.env.local`.
+- "Email or password is not right": the password is not the one that was set (or the email has a typo). In the website folder run `npm run make-admin -- your@email.com "Owner"`. It sets a new password you choose, confirms the email and makes the account an admin.
+- "No admin access": step 5 did not match any user; run `select * from public.admins;` to see.
+- Forms say "not set up yet": the secret key is missing from `.env.local` or from the host.
 
 ## What the owner can change (no developer needed)
 
@@ -45,6 +91,6 @@ Use the Upload photo button. Images must be under 8 MB. Wide landscape photos ab
 ## If something does not work
 
 - "Connect the database first": the three Supabase variables are missing on the host.
-- "No admin access": step 5 was not run for that email.
-- Enquiries say "not set up yet": `SUPABASE_SERVICE_ROLE_KEY` is missing on the host.
+- "No admin access": the admin step (Part B, step 5) was not run for that email.
+- Enquiries say "not set up yet": `SUPABASE_SECRET_KEY` is missing on the host.
 - Forgot password: the Forgot password link on the sign-in page emails a reset link.
