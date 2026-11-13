@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { COLLECTIONS } from '../../lib/admin/collections.js';
 import { BrandMark } from '../Icon.jsx';
+import ThemeToggle from '../ThemeToggle.jsx';
 
 const AdminCtx = createContext(null);
 export const useAdmin = () => useContext(AdminCtx);
@@ -114,6 +115,7 @@ export default function AdminShell({ title, actions, children }) {
             </ul>
           </nav>
           <div className="adm-side-foot">
+            <ThemeToggle className="adm-theme-btn" />
             <a href="/" target="_blank" rel="noopener noreferrer">
               View website
             </a>

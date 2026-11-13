@@ -7,7 +7,7 @@ export default function Journal({ settings, posts }) {
     <>
       <Seo settings={settings} title="Journal" description="Permits, seasons, routes and stays: practical notes from our team in Darjeeling." />
       <header className="page-head container">
-        <h1>Notes from the road</h1>
+        <h1>Permits, seasons and road notes</h1>
         <p className="lead">Permits, seasons, road conditions and the stays we like, written by the people who run the trips.</p>
       </header>
       <section className="container" aria-label="All stories" style={{ paddingBottom: 'var(--sp-9)' }}>

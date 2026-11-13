@@ -11,15 +11,9 @@ export default async function handler(req, res) {
 
   const paths = Array.isArray(req.body?.paths) ? req.body.paths : [];
   const safe = [...new Set(paths)].filter((p) => typeof p === 'string' && /^\/[\w\-/]*$/.test(p)).slice(0, 50);
-  const done = [];
-  const failed = [];
-  for (const p of safe) {
-    try {
-      await res.revalidate(p);
-      done.push(p);
-    } catch {
-      failed.push(p); // a deleted item's page no longer exists; ISR expiry handles it
-    }
-  }
+  // refresh all pages at the same time, so a save finishes in the time of the slowest page
+  const results = await Promise.allSettled(safe.map((p) => res.revalidate(p)));
+  const done = safe.filter((_, i) => results[i].status === 'fulfilled');
+  const failed = safe.filter((_, i) => results[i].status === 'rejected'); // a deleted item's page no longer exists; ISR expiry handles it
   return res.status(200).json({ done, failed });
 }

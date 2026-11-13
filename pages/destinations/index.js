@@ -8,7 +8,7 @@ export default function Destinations({ settings, destinations }) {
     <>
       <Seo settings={settings} title="Destinations" description="Sandakphu, Darjeeling, Sikkim and the Dooars: the places we plan trips to, with best seasons and altitudes." />
       <header className="page-head container">
-        <h1>Places we know by heart</h1>
+        <h1>Where we travel</h1>
         <p className="lead">From the Singalila Ridge to the rhino grasslands of the Dooars, each region with its season, altitude and the trips that go there.</p>
       </header>
       <section className="container" aria-label="Destination list" style={{ paddingBottom: 'var(--sp-9)' }}>

@@ -234,16 +234,16 @@ export function AltitudeStrip({ itinerary = [] }) {
   );
 }
 
-export function FaqList({ faqs, title = 'Good to know before you book', text }) {
+export function FaqList({ faqs, title = 'Before you book', text }) {
   if (!faqs.length) return null;
   return (
     <section className="section" aria-labelledby="faq-title">
       <div className="container faq-grid">
         <div className="faq-left">
           <h2 id="faq-title">{title}</h2>
-          <p>{text || 'Something else on your mind? A real person answers every message, usually the same day.'}</p>
+          <p>{text || 'Ask about altitude, permits or the best month for your group. Our Darjeeling team replies, usually the same day.'}</p>
           <ArrowButton href="/book-a-trip" variant="dark">
-            Ask us anything
+            Send a question
           </ArrowButton>
         </div>
         <div className="faq-list">
@@ -276,7 +276,7 @@ export function CtaWindow({ settings, title, text }) {
               Plan a trip
             </ArrowButton>
             <Link href="/packages" className="btn-ghost on-dark">
-              Browse all trips
+              See all trips
             </Link>
           </div>
         </div>

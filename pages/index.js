@@ -37,7 +37,6 @@ export default function Home({ settings: s, packages, destinations, posts, revie
             <div className="hero-copy">
               {s.hero_badge && (
                 <p className="hero-badge" data-load style={{ '--i': 0 }}>
-                  <i aria-hidden="true" />
                   {s.hero_badge}
                 </p>
               )}
@@ -101,7 +100,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
       {destinations.length > 0 && (
         <section className="section" aria-labelledby="dest-title">
           <div className="container section-head">
-            <h2 id="dest-title">Places we know by heart</h2>
+            <h2 id="dest-title">Where we travel</h2>
             <Link href="/destinations" className="btn-ghost">
               All destinations
             </Link>
@@ -113,7 +112,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
       <section className="section-tight" aria-labelledby="trips-title">
         <div className="container">
           <div className="section-head">
-            <h2 id="trips-title">Find a trip that fits</h2>
+            <h2 id="trips-title">Pick your route</h2>
             <p>Filter by region or travel style. Every price covers transport, stays, permits and most meals on the route.</p>
           </div>
           <TripFinder packages={packages} limit={6} />
@@ -129,7 +128,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
           </div>
           <div data-reveal style={{ '--i': 1 }}>
             <h2 id="how-title" style={{ fontSize: 'var(--fs-h2)' }}>
-              From a rough idea to a packed bag
+              How planning works
             </h2>
             <ol className="steps-list">
               {(s.steps || []).map((st, i) => (
@@ -143,7 +142,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
               ))}
             </ol>
             <Link href="/about" className="btn-ghost">
-              More about how we work
+              About our team
             </Link>
           </div>
         </div>
@@ -152,7 +151,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
       {reviews.length > 0 && (
         <section className="section-tight reviews" aria-labelledby="reviews-title">
           <div className="container section-head">
-            <h2 id="reviews-title">What travellers say when they get home</h2>
+            <h2 id="reviews-title">From travellers who went with us</h2>
             <Link href="/share-your-trip" className="btn-ghost">
               Share your trip
             </Link>
@@ -167,7 +166,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
       <section className="section" aria-labelledby="included-title">
         <div className="container">
           <div className="section-head">
-            <h2 id="included-title">One price, nothing to add up later</h2>
+            <h2 id="included-title">What every price covers</h2>
           </div>
           <div className="included-grid">
             <div className="included-photo" data-reveal>
@@ -192,7 +191,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
         <section className="section-tight" aria-labelledby="journal-title">
           <div className="container">
             <div className="section-head">
-              <h2 id="journal-title">Notes from the road</h2>
+              <h2 id="journal-title">From the journal</h2>
               <Link href="/blog" className="btn-ghost">
                 All stories
               </Link>

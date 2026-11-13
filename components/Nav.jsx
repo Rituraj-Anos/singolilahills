@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import ArrowButton from './ArrowButton.jsx';
 import Icon, { BrandMark } from './Icon.jsx';
+import ThemeToggle from './ThemeToggle.jsx';
 
 export const NAV_LINKS = [
   { label: 'Trips', href: '/packages' },
@@ -61,6 +62,7 @@ export default function Nav({ brand }) {
               </li>
             ))}
           </ul>
+          <ThemeToggle />
           <div className="nav-cta">
             <ArrowButton href="/book-a-trip">Plan a trip</ArrowButton>
           </div>
