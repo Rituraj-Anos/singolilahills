@@ -1,4 +1,4 @@
-# Singolila Hills website: setup and admin guide
+# Singalila Hills website: setup and admin guide
 
 ## One-time setup (about 30 minutes, once)
 

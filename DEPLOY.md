@@ -18,7 +18,7 @@ The site is its own project, separate from the extractor tool in the folder abov
 ```
 git init
 git add .
-git commit -m "Singolila Hills website"
+git commit -m "Singalila Hills website"
 git branch -M main
 git remote add origin https://github.com/Rituraj-Anos/singolilahills.git
 git push -u origin main

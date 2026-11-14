@@ -1,7 +1,7 @@
 {
-  "name": "singolila-hills",
+  "name": "singalila-hills",
   "version": "1.0.0",
-  "description": "Singolila Hills: Himalayan journeys website with admin panel",
+  "description": "Singalila Hills: Himalayan journeys website with admin panel",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

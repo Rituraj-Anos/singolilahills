@@ -1,4 +1,4 @@
-# Singolila Hills website
+# Singalila Hills website
 
 Next.js (Pages Router) site with a built-in admin panel, backed by Supabase.
 
