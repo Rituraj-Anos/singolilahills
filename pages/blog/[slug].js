@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { PostCard } from '../../components/Cards.jsx';
+import Pic from '../../components/Pic.jsx';
+import Slider from '../../components/Slider.jsx';
 import { Seo } from '../../components/Layout.jsx';
 import { CtaWindow } from '../../components/Sections.jsx';
 import { getPost, getPosts, pageProps } from '../../lib/content.js';
@@ -35,7 +37,7 @@ export default function Post({ settings, post, more }) {
         {post.image && (
           <div className="container">
             <div className="split-photo" style={{ aspectRatio: '21 / 9' }}>
-              <img src={post.image} alt="" decoding="async" />
+              <Pic src={post.image} sizes="100vw" alt="" decoding="async" />
             </div>
           </div>
         )}
@@ -46,14 +48,11 @@ export default function Post({ settings, post, more }) {
       </article>
       {more.length > 0 && (
         <section className="section-tight container" aria-labelledby="more-title">
-          <div className="section-head">
-            <h2 id="more-title">Keep reading</h2>
-          </div>
-          <div className="post-grid">
+          <Slider label="Keep reading" cols={3} head={<h2 id="more-title">Keep reading</h2>}>
             {more.map((p) => (
               <PostCard key={p.slug} post={p} />
             ))}
-          </div>
+          </Slider>
         </section>
       )}
       <CtaWindow settings={settings} />

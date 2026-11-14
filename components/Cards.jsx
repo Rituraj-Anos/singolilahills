@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import Icon from './Icon.jsx';
+import Pic from './Pic.jsx';
 import { dateLabel, money } from '../lib/format.js';
 
 export function TripCard({ pkg, headingLevel = 3 }) {
   const H = `h${headingLevel}`;
   return (
     <Link href={`/packages/${pkg.slug}`} className="trip-card">
-      <img src={pkg.hero_image} alt="" loading="lazy" decoding="async" width="800" height="1000" />
+      <Pic src={pkg.hero_image} sizes="(max-width: 640px) 92vw, (max-width: 1000px) 46vw, 33vw" alt="" loading="lazy" decoding="async" width="800" height="1000" />
       <span className="shade" aria-hidden="true" />
       <span className="chips">
         <span className="chip">{pkg.duration_days} days</span>
@@ -32,7 +33,7 @@ export function TripCard({ pkg, headingLevel = 3 }) {
 export function DestCard({ dest }) {
   return (
       <Link href={`/destinations/${dest.slug}`} className="dest-card">
-        <img src={dest.hero_image} alt="" loading="lazy" decoding="async" width="640" height="864" />
+        <Pic src={dest.hero_image} sizes="(max-width: 640px) 70vw, 340px" alt="" loading="lazy" decoding="async" width="640" height="864" />
         <span className="shade" aria-hidden="true" />
         <span className="hover-veil" aria-hidden="true" />
         <span className="caption">
@@ -47,7 +48,7 @@ export function PostCard({ post }) {
   return (
     <Link href={`/blog/${post.slug}`} className="post-card" data-reveal>
       <span className="cover">
-        <img src={post.image} alt="" loading="lazy" decoding="async" width="800" height="600" />
+        <Pic src={post.image} sizes="(max-width: 900px) 92vw, 33vw" alt="" loading="lazy" decoding="async" width="800" height="600" />
       </span>
       <span className="chips">
         {post.category && <span className="chip chip-plain">{post.category}</span>}
@@ -80,7 +81,7 @@ export function ReviewCard({ review }) {
 export function ReelCard({ reel }) {
   return (
     <a className="reel" href={reel.reel_url} target="_blank" rel="noopener noreferrer">
-      <img src={reel.thumbnail} alt="" loading="lazy" decoding="async" width="360" height="640" />
+      <Pic src={reel.thumbnail} sizes="260px" alt="" loading="lazy" decoding="async" width="360" height="640" />
       <span className="shade" aria-hidden="true" />
       <span className="play" aria-hidden="true">
         <Icon name="play" />

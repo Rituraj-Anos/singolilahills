@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import ArrowButton from '../components/ArrowButton.jsx';
 import Icon from '../components/Icon.jsx';
-import { DestCard, PostCard, ReviewCard } from '../components/Cards.jsx';
+import Pic from '../components/Pic.jsx';
+import DestCarousel from '../components/DestCarousel.jsx';
+import { PostCard, ReviewCard } from '../components/Cards.jsx';
 import { CtaWindow, FaqList, Statement, Ticker, TravelStyles, TripFinder } from '../components/Sections.jsx';
 import { Seo } from '../components/Layout.jsx';
 import { getDestinations, getFaqs, getPackages, getPosts, getReviews, pageProps } from '../lib/content.js';
@@ -30,7 +32,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-panel">
           <div className="hero-media">
-            <img src={s.hero_image} alt="" fetchPriority="high" decoding="async" />
+            <Pic src={s.hero_image} sizes="100vw" alt="" fetchPriority="high" decoding="async" />
           </div>
           <span className="hero-veil" aria-hidden="true" />
           <div className="hero-row">
@@ -81,7 +83,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
             </ArrowButton>
           </div>
           <div className="intro-photo" data-reveal style={{ '--i': 1 }}>
-            <img src={s.intro_image} alt="" loading="lazy" decoding="async" />
+            <Pic src={s.intro_image} sizes="(max-width: 860px) 92vw, 45vw" alt="" loading="lazy" decoding="async" />
           </div>
           <div className="facts" data-reveal style={{ '--i': 2 }}>
             <dl>
@@ -99,13 +101,16 @@ export default function Home({ settings: s, packages, destinations, posts, revie
 
       {destinations.length > 0 && (
         <section className="section" aria-labelledby="dest-title">
-          <div className="container section-head">
-            <h2 id="dest-title">Where we travel</h2>
-            <Link href="/destinations" className="btn-ghost">
-              All destinations
-            </Link>
-          </div>
-          <Ticker items={destinations} duration={destinations.length * 9} label="Destinations" render={(d) => <DestCard dest={d} />} />
+          <DestCarousel
+            items={destinations}
+            title="Where we travel"
+            titleId="dest-title"
+            actions={
+              <Link href="/destinations" className="btn-ghost">
+                All destinations
+              </Link>
+            }
+          />
         </section>
       )}
 
@@ -115,7 +120,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
             <h2 id="trips-title">Pick your route</h2>
             <p>Filter by region or travel style. Every price covers transport, stays, permits and most meals on the route.</p>
           </div>
-          <TripFinder packages={packages} limit={6} />
+          <TripFinder packages={packages} limit={6} swipe />
         </div>
       </section>
 
@@ -124,7 +129,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
       <section className="section" aria-labelledby="how-title">
         <div className="container steps-grid">
           <div className="steps-photo" data-reveal>
-            <img src={s.steps_image} alt="" loading="lazy" decoding="async" />
+            <Pic src={s.steps_image} sizes="(max-width: 860px) 92vw, 40vw" alt="" loading="lazy" decoding="async" />
           </div>
           <div data-reveal style={{ '--i': 1 }}>
             <h2 id="how-title" style={{ fontSize: 'var(--fs-h2)' }}>
@@ -170,7 +175,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
           </div>
           <div className="included-grid">
             <div className="included-photo" data-reveal>
-              <img src={s.included_image} alt="" loading="lazy" decoding="async" />
+              <Pic src={s.included_image} sizes="(max-width: 860px) 92vw, 45vw" alt="" loading="lazy" decoding="async" />
             </div>
             <div className="included-cells">
               {(s.included || []).map((it, i) => (
@@ -196,7 +201,7 @@ export default function Home({ settings: s, packages, destinations, posts, revie
                 All stories
               </Link>
             </div>
-            <div className="post-grid">
+            <div className="post-grid is-compact">
               {posts.slice(0, 3).map((p) => (
                 <PostCard key={p.slug} post={p} />
               ))}

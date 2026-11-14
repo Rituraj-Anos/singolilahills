@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AdminShell, { useToast } from '../../../components/admin/AdminShell.jsx';
 import { supabase } from '../../../lib/supabase.js';
 import { COLLECTIONS, allFields } from '../../../lib/admin/collections.js';
+import { refreshPages } from '../../../lib/admin/api.js';
 import { money } from '../../../lib/format.js';
 
 function cell(field, value, row) {
@@ -35,6 +36,22 @@ function CollectionList() {
 
   const fields = useMemo(() => (c ? Object.fromEntries(allFields(c.groups).map((f) => [f.name, f])) : {}), [c]);
   const shown = (rows || []).filter((r) => !q || String(r[c.titleField] || '').toLowerCase().includes(q.toLowerCase()));
+  const [busy, setBusy] = useState(null);
+
+  async function remove(r) {
+    const name = r[c.titleField] || 'Untitled';
+    if (!window.confirm(`Delete "${name}"? This cannot be undone. To keep it but hide it, open it and untick "Show on website" instead.`)) return;
+    setBusy(r.id);
+    const { error } = await supabase.from(c.table).delete().eq('id', r.id);
+    if (error) {
+      setBusy(null);
+      return toast(error.message, true);
+    }
+    setRows((rs) => rs.filter((x) => x.id !== r.id));
+    await refreshPages(c.paths(r));
+    setBusy(null);
+    toast(`Deleted "${name}". The website is updated.`);
+  }
 
   if (!router.isReady) return null;
   if (!c)
@@ -70,6 +87,9 @@ function CollectionList() {
                 {c.columns.map((col) => (
                   <th key={col}>{fields[col]?.label || col}</th>
                 ))}
+                <th>
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -78,6 +98,14 @@ function CollectionList() {
                   {c.columns.map((col, i) => (
                     <td key={col}>{i === 0 ? <Link href={`/admin/${key}/${r.id}`}>{r[col] || 'Untitled'}</Link> : cell(fields[col], r[col], r)}</td>
                   ))}
+                  <td className="adm-row-actions">
+                    <Link href={`/admin/${key}/${r.id}`} className="adm-link">
+                      Edit
+                    </Link>
+                    <button type="button" className="adm-link danger" disabled={busy === r.id} onClick={() => remove(r)}>
+                      {busy === r.id ? 'Deleting' : 'Delete'}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

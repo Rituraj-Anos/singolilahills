@@ -1,4 +1,4 @@
-# Shingolia Hills: next-steps implementation plan
+# Singalila Hills: next-steps implementation plan
 
 Goal: turn the site from "browse trips and send an enquiry" into one place where a traveller can discover, plan, customise, get a quote and pay a deposit, and where the owner can answer, quote and confirm without leaving the admin.
 
@@ -42,7 +42,7 @@ Everything after this needs a live database, so it comes first.
 
 1. Create the Supabase project. Run `01`, `02` and `seed.sql`, then the admin steps in `ADMIN-GUIDE.md`.
 2. Test end to end: sign in, edit a trip, upload a photo, check the public page updates, send an enquiry, see it in the inbox.
-3. Set the real WhatsApp number and confirm the brand spelling (Shingolia or Shingolila).
+3. Set the real WhatsApp number and confirm the brand spelling (Singalila or Singalila).
 4. Deploy a preview on Cloudflare (`@opennextjs/cloudflare`) or Vercel. Add a rate-limit rule on `/api/*`.
 5. Add the first automated check: a Playwright smoke test that loads the home page and submits the enquiry form.
 
@@ -299,6 +299,12 @@ The client needs a Razorpay account with business KYC approved. Test mode works 
 ---
 
 ## Phase 7: polish and growth (ongoing, pick as needed)
+
+- **Traveller reels row on the home page (to do, about 0.5 day).** A "Traveller reels" carousel with a play button on each cover, like the Video Reviews row on tourpickkars.in. Travellers share their reel; the owner adds it from the admin. The admin already has a reels tab (title, destination, Instagram link, cover image, show on website), and reels currently show only on matching trip pages. Work left:
+  - Load reels on the home page and show published ones in a `Slider` of `ReelCard`s, hidden when there are none.
+  - Rename the admin tab to "Traveller reels" and update its note.
+  - Optional: let travellers send a reel link on `/share-your-trip`, held for approval like review requests (needs a new migration).
+  - Optional: play the video in a pop-up on the site instead of opening Instagram.
 
 - Email confirmation to the traveller when they give an email (Resend is already wired for owner emails).
 - Simple analytics (Plausible, or GA with a consent banner), and a funnel in the admin overview: planner started, enquiries, quotes sent, quotes accepted, deposits paid.

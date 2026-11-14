@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import Icon from '../../components/Icon.jsx';
+import Pic from '../../components/Pic.jsx';
+import Slider from '../../components/Slider.jsx';
 import { TripCard } from '../../components/Cards.jsx';
 import { Seo } from '../../components/Layout.jsx';
 import { CtaWindow } from '../../components/Sections.jsx';
@@ -16,7 +18,7 @@ export default function Destination({ settings, dest, trips }) {
       <section className="hero trip-hero" aria-labelledby="dest-title">
         <div className="hero-panel">
           <div className="hero-media">
-            <img src={dest.hero_image} alt="" fetchPriority="high" decoding="async" />
+            <Pic src={dest.hero_image} sizes="100vw" alt="" fetchPriority="high" decoding="async" />
           </div>
           <span className="hero-veil" aria-hidden="true" />
           <div className="hero-row">
@@ -73,14 +75,11 @@ export default function Destination({ settings, dest, trips }) {
 
       {trips.length > 0 && (
         <section className="section-tight container" aria-labelledby="dest-trips">
-          <div className="section-head">
-            <h2 id="dest-trips">Trips that go here</h2>
-          </div>
-          <div className="trip-grid">
+          <Slider label="Trips that go here" cols={3} head={<h2 id="dest-trips">Trips that go here</h2>}>
             {trips.map((p) => (
               <TripCard key={p.slug} pkg={p} />
             ))}
-          </div>
+          </Slider>
         </section>
       )}
       <CtaWindow settings={settings} />

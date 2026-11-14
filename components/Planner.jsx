@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ArrowButton from './ArrowButton.jsx';
 import Icon from './Icon.jsx';
+import Pic from './Pic.jsx';
 import { rankTrips } from '../lib/match.mjs';
 import {
   DEFAULT_BUDGET_BANDS,
@@ -185,7 +186,7 @@ function PlannerInner({ initial, settings, trips, destinations, bands }) {
               {destinations.map((d) => (
                 <label key={d.slug} className="dest-pick">
                   <input type="checkbox" checked={plan.destinations.includes(d.slug)} onChange={() => update({ destinations: toggle(plan.destinations, d.slug) })} />
-                  <img src={d.hero_image} alt="" loading="lazy" decoding="async" width="320" height="240" />
+                  <Pic src={d.hero_image} sizes="(max-width: 640px) 46vw, 220px" alt="" loading="lazy" decoding="async" width="320" height="240" />
                   <span className="dest-pick-name">{d.name}</span>
                   <span className="dest-pick-tick" aria-hidden="true">
                     <Icon name="check" />
@@ -312,7 +313,7 @@ function PlannerInner({ initial, settings, trips, destinations, bands }) {
                 <div key={trip.slug} className="match">
                   <label className="match-pick">
                     <input type="radio" name="prefer" value={trip.slug} checked={choice === trip.slug} onChange={() => setPrefer(trip.slug)} />
-                    <img src={trip.hero_image} alt="" loading="lazy" decoding="async" width="88" height="88" />
+                    <Pic src={trip.hero_image} sizes="88px" alt="" loading="lazy" decoding="async" width="88" height="88" />
                     <span className="match-body">
                       <strong>{trip.title}</strong>
                       <small>

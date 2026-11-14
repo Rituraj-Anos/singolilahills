@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import ArrowButton from '../../components/ArrowButton.jsx';
 import Icon from '../../components/Icon.jsx';
+import Pic from '../../components/Pic.jsx';
+import Slider from '../../components/Slider.jsx';
 import { ReelCard, TripCard } from '../../components/Cards.jsx';
 import { Seo } from '../../components/Layout.jsx';
 import { AltitudeStrip, CtaWindow, FaqList } from '../../components/Sections.jsx';
@@ -52,7 +54,7 @@ export default function Trip({ settings: s, pkg, related, reels }) {
       <section className="hero trip-hero" aria-labelledby="trip-title">
         <div className="hero-panel">
           <div className="hero-media">
-            <img src={pkg.hero_image} alt="" fetchPriority="high" decoding="async" />
+            <Pic src={pkg.hero_image} sizes="100vw" alt="" fetchPriority="high" decoding="async" />
           </div>
           <span className="hero-veil" aria-hidden="true" />
           <div className="hero-row">
@@ -123,7 +125,7 @@ export default function Trip({ settings: s, pkg, related, reels }) {
                         <span className="faq-toggle" aria-hidden="true" />
                       </summary>
                       <div className="body">
-                        {d.image && <img className="day-photo" src={d.image} alt="" loading="lazy" decoding="async" width="800" height="450" />}
+                        {d.image && <Pic className="day-photo" src={d.image} sizes="(max-width: 960px) 92vw, 600px" alt="" loading="lazy" decoding="async" width="800" height="450" />}
                         <p>{d.description}</p>
                         <div className="meta">
                           {d.altitude && <span className="chip chip-plain">{d.altitude}</span>}
@@ -162,7 +164,7 @@ export default function Trip({ settings: s, pkg, related, reels }) {
                 <h2 id="gallery-title">On the route</h2>
                 <div className="gallery">
                   {pkg.gallery.map((src) => (
-                    <img key={src} src={src} alt="" loading="lazy" decoding="async" width="600" height="450" />
+                    <Pic key={src} src={src} sizes="(max-width: 640px) 46vw, 300px" alt="" loading="lazy" decoding="async" width="600" height="450" />
                   ))}
                 </div>
               </section>
@@ -210,14 +212,11 @@ export default function Trip({ settings: s, pkg, related, reels }) {
 
       {related.length > 0 && (
         <section className="section container" aria-labelledby="related-title">
-          <div className="section-head">
-            <h2 id="related-title">You might also like</h2>
-          </div>
-          <div className="trip-grid">
+          <Slider label="You might also like" cols={3} head={<h2 id="related-title">You might also like</h2>}>
             {related.map((p) => (
               <TripCard key={p.slug} pkg={p} />
             ))}
-          </div>
+          </Slider>
         </section>
       )}
 

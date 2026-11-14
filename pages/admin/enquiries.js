@@ -210,8 +210,15 @@ function Enquiries() {
   }, [rows, open]);
   const onSaved = useCallback((row, deletedId) => {
     setRows((rs) => (deletedId ? rs.filter((r) => r.id !== deletedId) : rs.map((r) => (r.id === row.id ? row : r))));
-    if (deletedId) setOpenId(null);
+    if (deletedId) setOpenId((cur) => (cur === deletedId ? null : cur));
   }, []);
+  async function removeRow(r) {
+    if (!window.confirm(`Delete the enquiry from ${r.name}? This cannot be undone.`)) return;
+    const { error } = await supabase.from('inquiries').delete().eq('id', r.id);
+    if (error) return toast(error.message, true);
+    onSaved(null, r.id);
+    toast('Deleted');
+  }
 
   const exportCsv = () => {
     const flat = shown.map((r) => ({
@@ -284,6 +291,9 @@ function Enquiries() {
                   <th>Budget</th>
                   <th>Status</th>
                   <th>Received</th>
+                  <th>
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -303,6 +313,11 @@ function Enquiries() {
                       {isOverdue(r) && <span className="adm-follow"> follow up</span>}
                     </td>
                     <td>{new Date(r.created_at).toLocaleDateString('en-IN')}</td>
+                    <td className="adm-row-actions">
+                      <button type="button" className="adm-link danger" onClick={() => removeRow(r)} aria-label={`Delete the enquiry from ${r.name}`}>
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

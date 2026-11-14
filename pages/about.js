@@ -1,4 +1,5 @@
 import { Seo } from '../components/Layout.jsx';
+import Pic from '../components/Pic.jsx';
 import { CtaWindow, FaqList } from '../components/Sections.jsx';
 import { getFaqs, pageProps } from '../lib/content.js';
 import { markdown } from '../lib/format.js';
@@ -13,7 +14,7 @@ export default function About({ settings: s, faqs }) {
       <section className="container section-tight" aria-label="Our story">
         <div className="split">
           <div className="split-photo">
-            <img src={s.about_image} alt="" decoding="async" />
+            <Pic src={s.about_image} sizes="(max-width: 860px) 92vw, 50vw" alt="" decoding="async" />
           </div>
           <div className="prose" dangerouslySetInnerHTML={{ __html: markdown(s.about_text) }} />
         </div>

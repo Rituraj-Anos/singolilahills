@@ -225,6 +225,30 @@
 .adm-rep-tools .danger {
   color: var(--c-danger);
 }
+.adm-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.adm-btn-danger {
+  background: var(--c-card);
+  color: var(--c-danger);
+  border-color: var(--c-danger);
+}
+.adm-btn-danger:hover {
+  background: var(--c-danger);
+  color: #fff;
+}
+.adm-table td.adm-row-actions {
+  white-space: nowrap;
+  text-align: right;
+}
+.adm-row-actions > * + * {
+  margin-left: 16px;
+}
+.adm-table .adm-row-actions a {
+  color: var(--c-link);
+  text-decoration: underline;
+}
 
 /* forms */
 .adm-form {

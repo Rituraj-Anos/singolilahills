@@ -86,6 +86,7 @@ function Editor() {
     if (!window.confirm(`Delete "${values[c.titleField]}"? This cannot be undone. To keep it but hide it, untick "Show on website" instead.`)) return;
     const { error } = await supabase.from(c.table).delete().eq('id', id);
     if (error) return toast(error.message, true);
+    setDirty(false); // nothing left to save, so don't warn on the way out
     await refreshPages(c.paths(original || values));
     router.replace(`/admin/${key}`);
   }
@@ -113,6 +114,11 @@ function Editor() {
             <a href={liveUrl} target="_blank" rel="noopener noreferrer" className="adm-btn adm-btn-quiet">
               View on website
             </a>
+          )}
+          {!isNew && values && (
+            <button type="button" className="adm-btn adm-btn-danger" onClick={remove}>
+              Delete {c.singular}
+            </button>
           )}
         </>
       }

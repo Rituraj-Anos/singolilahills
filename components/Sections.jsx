@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ArrowButton from './ArrowButton.jsx';
 import { TripCard } from './Cards.jsx';
+import Pic from './Pic.jsx';
+import Slider from './Slider.jsx';
 import { metres } from '../lib/format.js';
 
 /* Infinite ticker. The list renders twice (second copy hidden from assistive tech) so the loop is seamless. */
@@ -91,7 +93,7 @@ export function TravelStyles({ packages }) {
         <div className="styles-grid">
           <figure className="styles-photo">
             {styles.map((s, i) => (
-              <img key={s.name} src={s.image} alt="" loading="lazy" decoding="async" className={i === active ? 'is-active' : ''} />
+              <Pic key={s.name} src={s.image} sizes="(max-width: 860px) 92vw, 45vw" alt="" loading="lazy" decoding="async" className={i === active ? 'is-active' : ''} />
             ))}
             <figcaption>{styles[active].tagline}</figcaption>
           </figure>
@@ -120,7 +122,7 @@ export function TravelStyles({ packages }) {
 }
 
 /* Trip grid with destination and style filters. Filters sync to ?region= and ?style= so links can pre-filter. */
-export function TripFinder({ packages, limit, initialStyle = '', initialRegion = '', headingLevel = 3 }) {
+export function TripFinder({ packages, limit, initialStyle = '', initialRegion = '', headingLevel = 3, swipe = false }) {
   // callers pass a `key` built from the initial filters, so a new ?style= link remounts with fresh state
   const [region, setRegion] = useState(initialRegion);
   const [style, setStyle] = useState(initialStyle);
@@ -128,8 +130,7 @@ export function TripFinder({ packages, limit, initialStyle = '', initialRegion =
   const styles = [...new Set(packages.map((p) => p.category).filter(Boolean))];
   const shown = packages.filter((p) => (!region || p.region === region) && (!style || p.category === style));
   const visible = limit ? shown.slice(0, limit) : shown;
-  return (
-    <>
+  const filters = (
       <div className="finder" role="group" aria-label="Filter trips">
         <label>
           <span className="sr-only">Region</span>
@@ -162,10 +163,25 @@ export function TripFinder({ packages, limit, initialStyle = '', initialRegion =
           </button>
         )}
       </div>
+  );
+  const empty = <p className="empty">No trips match those filters yet. Ask us and we will plan one for you.</p>;
+  return (
+    <>
+      {swipe ? (
+        <Slider head={filters} label="Trips" cols={3}>
+          {visible.map((p) => (
+            <TripCard key={p.slug} pkg={p} headingLevel={headingLevel} />
+          ))}
+        </Slider>
+      ) : (
+        filters
+      )}
       <p className="sr-only" role="status" aria-live="polite">
         {shown.length} trips shown
       </p>
-      {visible.length ? (
+      {!visible.length ? (
+        empty
+      ) : swipe ? null : (
         <div className="trip-grid">
           {visible.map((p, i) => (
             <div key={p.slug} data-reveal style={{ '--i': i % 3 }}>
@@ -173,8 +189,6 @@ export function TripFinder({ packages, limit, initialStyle = '', initialRegion =
             </div>
           ))}
         </div>
-      ) : (
-        <p className="empty">No trips match those filters yet. Ask us and we will plan one for you.</p>
       )}
       {limit && shown.length > limit && (
         <div className="more-row">
@@ -266,7 +280,7 @@ export function CtaWindow({ settings, title, text }) {
   return (
     <section className="cta" aria-labelledby="cta-title">
       <div className="cta-window">
-        <img src={settings.cta_image} alt="" loading="lazy" decoding="async" />
+        <Pic src={settings.cta_image} sizes="100vw" alt="" loading="lazy" decoding="async" />
         <span className="veil" aria-hidden="true" />
         <div className="cta-content" data-reveal>
           <h2 id="cta-title">{title || settings.cta_title}</h2>
