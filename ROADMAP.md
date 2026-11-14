@@ -1,4 +1,4 @@
-# Singalila Hills: next-steps implementation plan
+# Singolila Hills: next-steps implementation plan
 
 Goal: turn the site from "browse trips and send an enquiry" into one place where a traveller can discover, plan, customise, get a quote and pay a deposit, and where the owner can answer, quote and confirm without leaving the admin.
 

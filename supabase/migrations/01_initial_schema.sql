@@ -1,5 +1,5 @@
 -- ==============================================================================
--- Singalila Hills — Himalayan Journeys & Stays
+-- Singolila Hills — Himalayan Journeys & Stays
 -- Initial Schema & Seed Migration (Supabase PostgreSQL)
 -- ==============================================================================
 

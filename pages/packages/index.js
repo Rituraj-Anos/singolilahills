@@ -12,7 +12,7 @@ export default function Trips({ settings, packages }) {
       <Seo
         settings={settings}
         title="All trips"
-        description="Every Singalila Hills trip across Darjeeling, Sikkim, Sandakphu and the Dooars, with days, style and price per person."
+        description="Every Singolila Hills trip across Darjeeling, Sikkim, Sandakphu and the Dooars, with days, style and price per person."
       />
       <header className="page-head container">
         <h1>Trips across the Eastern Himalaya</h1>
