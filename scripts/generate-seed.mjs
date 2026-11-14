@@ -8,6 +8,9 @@ import { REELS } from '../lib/data/reels.js';
 import { REVIEWS } from '../lib/data/reviews.js';
 import { DEFAULT_SETTINGS, FAQS } from '../lib/data/settings.js';
 import { PLANNER_META } from '../lib/data/planner-meta.js';
+import { EXPERIENCES } from '../lib/data/experiences.js';
+import { TRIP_OPTIONS } from '../lib/data/trip-options.js';
+import { withPins } from '../lib/data/route-pins.js';
 
 // dollar-quoting with a tag that never appears in the data keeps the JSON exactly as is
 const lit = (v) => {
@@ -22,7 +25,16 @@ const insert = (table, rows) =>
     rows.map((r) => ({ created_at: now, updated_at: now, ...r }))
   )}) on conflict (id) do nothing;`;
 
-const packages = PACKAGES.map((p, i) => ({ ...p, ...(PLANNER_META[p.slug] || {}), published: true, sort_order: i }));
+const packages = PACKAGES.map((p, i) => ({
+  ...p,
+  ...(PLANNER_META[p.slug] || {}),
+  ...(TRIP_OPTIONS[p.slug] || {}),
+  itinerary: withPins(p.slug, p.itinerary),
+  show_customiser: false, // example prices: the owner switches the panel on per trip after checking them
+  published: true,
+  sort_order: i,
+}));
+const experiences = EXPERIENCES.map((e, i) => ({ ...e, published: true, sort_order: i }));
 const destinations = DESTINATIONS.map((d, i) => ({ ...d, published: true, sort_order: i }));
 const posts = BLOGS.map(({ date, ...b }) => ({ ...b, published_at: date, published: true }));
 const reels = REELS.map(({ reelUrl, ...r }, i) => ({ ...r, reel_url: reelUrl, sort_order: i, published: false }));
@@ -39,8 +51,9 @@ ${insert('posts', posts)}
 ${insert('reels', reels)}
 ${insert('reviews', reviews)}
 ${insert('faqs', faqs)}
+${insert('experiences', experiences)}
 update public.site_settings set data = ${lit(DEFAULT_SETTINGS)} where id = 1 and data = '{}'::jsonb;
 commit;
 `;
 fs.writeFileSync(new URL('../supabase/seed.sql', import.meta.url), sql);
-console.log('wrote supabase/seed.sql', { packages: packages.length, destinations: destinations.length, posts: posts.length, reels: reels.length, reviews: reviews.length, faqs: faqs.length });
+console.log('wrote supabase/seed.sql', { packages: packages.length, destinations: destinations.length, posts: posts.length, reels: reels.length, reviews: reviews.length, faqs: faqs.length, experiences: experiences.length });

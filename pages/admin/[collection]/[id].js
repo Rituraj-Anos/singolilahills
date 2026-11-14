@@ -5,7 +5,7 @@ import AdminShell, { useToast } from '../../../components/admin/AdminShell.jsx';
 import { FieldGroups } from '../../../components/admin/Fields.jsx';
 import { supabase } from '../../../lib/supabase.js';
 import { COLLECTIONS, defaults, toRow } from '../../../lib/admin/collections.js';
-import { refreshPages } from '../../../lib/admin/api.js';
+import { dbMessage, refreshPages } from '../../../lib/admin/api.js';
 
 function Editor() {
   const router = useRouter();
@@ -32,7 +32,7 @@ function Editor() {
       .eq('id', id)
       .maybeSingle()
       .then(({ data, error }) => {
-        if (error || !data) return toast(error?.message || 'Not found', true);
+        if (error || !data) return toast(error ? dbMessage(error, c.migration) : 'Not found', true);
         setValues({ ...defaults(c.groups), ...data });
         setOriginal(data);
       });
@@ -58,7 +58,8 @@ function Editor() {
 
   async function save(e) {
     e.preventDefault();
-    const { row, errors: errs } = toRow(c.groups, values);
+    const { row, errors: base } = toRow(c.groups, values);
+    const errs = { ...(c.validate ? c.validate(row) : {}), ...base };
     setErrors(errs);
     if (Object.keys(errs).length) {
       toast('Please fix the highlighted fields.', true);
@@ -70,7 +71,7 @@ function Editor() {
     const { data, error } = await q.select().single();
     setBusy(false);
     if (error) {
-      const msg = error.code === '23505' ? 'That web address is already used by another item. Change it and save again.' : error.message;
+      const msg = error.code === '23505' ? 'That web address or short name is already used by another item. Change it and save again.' : dbMessage(error, c.migration);
       return toast(msg, true);
     }
     setDirty(false);

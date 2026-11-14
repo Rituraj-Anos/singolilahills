@@ -739,3 +739,317 @@ textarea.adm-tall {
   color: var(--c-danger);
   font-weight: 500;
 }
+
+/* ---------- Menu groups ---------- */
+.adm-side {
+  overflow-y: auto;
+}
+.adm-nav-group + .adm-nav-group {
+  margin-top: var(--sp-4);
+}
+.adm-nav-title {
+  margin: 0 0 4px;
+  padding: 0 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+/* ---------- Shared bits for the business screens ---------- */
+.adm-warn {
+  color: var(--c-danger);
+}
+.adm-note.adm-warn {
+  border-color: var(--c-danger);
+}
+.adm-h2 {
+  margin-bottom: var(--sp-3);
+}
+.adm-stack {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+}
+.adm-stack > .adm-card + .adm-card {
+  margin-top: 0;
+}
+.adm-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+.adm-form-card {
+  display: grid;
+  gap: var(--sp-4);
+}
+.adm-form-card .adm-field {
+  margin: 0;
+}
+.adm-grid2,
+.adm-grid3 {
+  display: grid;
+  gap: var(--sp-3);
+  align-items: start;
+}
+.adm-grid2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.adm-grid3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.adm-span2 {
+  grid-column: span 2;
+}
+.adm-tiles-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.adm-tiles-3 .adm-tile strong {
+  font-size: 1.45rem;
+}
+.adm-tile span {
+  color: var(--c-muted);
+}
+.adm-tile.is-warn strong {
+  color: var(--c-danger);
+}
+.adm-tag {
+  display: inline-block;
+  margin: 0 4px 4px 0;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--c-sand);
+  color: var(--c-ink);
+  font-size: 0.8125rem;
+}
+.adm-list {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+}
+.adm-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-block: 10px;
+  border-top: 1px solid var(--c-line);
+  flex-wrap: wrap;
+}
+.adm-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.adm-timeline li {
+  display: grid;
+  grid-template-columns: 96px 110px minmax(0, 1fr);
+  gap: 4px 12px;
+  padding-block: 10px;
+  border-top: 1px solid var(--c-line);
+  align-items: baseline;
+}
+.adm-timeline .adm-hint {
+  grid-column: 3;
+}
+.adm-time {
+  color: var(--c-muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.adm-kind {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--c-ink);
+}
+.adm-dl-tight {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.adm-dl-tight dd {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.adm-table .num,
+.adm-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.adm-pill.i-draft {
+  color: var(--c-muted);
+}
+.adm-pill.i-issued {
+  background: var(--c-warn-bg);
+}
+.adm-pill.i-partly_paid {
+  background: var(--c-accent-22);
+}
+.adm-pill.i-paid {
+  background: var(--c-success-bg);
+  color: var(--c-success);
+}
+.adm-pill.i-void {
+  text-decoration: line-through;
+  color: var(--c-muted);
+}
+
+/* client picker and place search results */
+.adm-picker {
+  display: grid;
+  gap: var(--sp-3);
+}
+.adm-chosen {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: var(--r-inner);
+  background: var(--c-bg);
+}
+.adm-pin-results {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-inner);
+  background: var(--c-card);
+  max-height: 260px;
+  overflow-y: auto;
+}
+.adm-pin-results button {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--c-text);
+  text-align: left;
+  cursor: pointer;
+}
+.adm-pin-results button:hover,
+.adm-pin-results button:focus-visible {
+  background: var(--c-sand);
+}
+
+/* map pin field */
+.adm-pin {
+  display: grid;
+  gap: var(--sp-2);
+}
+.adm-pin-map {
+  height: 240px;
+  border-radius: var(--r-inner);
+  border: 1px solid var(--c-line-strong);
+  overflow: hidden;
+  background: var(--c-bg);
+}
+
+/* ---------- Invoice builder ---------- */
+.adm-inv {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+.adm-inv-preview {
+  position: sticky;
+  top: var(--sp-4);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+.adm-inv-preview .inv-doc {
+  font-size: 0.8125rem;
+  box-shadow: var(--shadow-card);
+}
+.adm-lines {
+  display: grid;
+  gap: var(--sp-3);
+  overflow-x: auto;
+}
+.adm-lines-table td {
+  padding: 6px 4px;
+  vertical-align: middle;
+}
+.adm-lines-table td:first-child {
+  min-width: 200px;
+}
+.adm-num {
+  width: 96px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.adm-num-s {
+  width: 70px;
+}
+.adm-sum {
+  display: grid;
+  gap: 4px;
+  margin: var(--sp-4) 0 0 auto;
+  max-width: 300px;
+}
+.adm-sum div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.adm-sum dt {
+  color: var(--c-muted);
+}
+.adm-sum dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.adm-sum .is-total {
+  padding-top: 6px;
+  border-top: 1px solid var(--c-line-strong);
+  font-weight: 600;
+  color: var(--c-ink);
+}
+.adm-sum .is-total dt {
+  color: var(--c-ink);
+}
+.adm-pay-form {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--c-line);
+}
+.adm-savebar .adm-btn + .adm-btn {
+  margin-left: 0;
+}
+
+@media (max-width: 1200px) {
+  .adm-inv {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .adm-inv-preview {
+    position: static;
+    max-height: none;
+  }
+}
+@media (max-width: 1000px) {
+  .adm-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .adm-grid2,
+  .adm-grid3,
+  .adm-tiles-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .adm-span2 {
+    grid-column: auto;
+  }
+  .adm-timeline li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .adm-timeline .adm-hint {
+    grid-column: auto;
+  }
+}

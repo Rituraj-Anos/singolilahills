@@ -1,6 +1,6 @@
 import { getDestinations, getPackages, getPosts } from '../lib/content.js';
 
-const STATIC = ['/', '/packages', '/destinations', '/blog', '/about', '/book-a-trip', '/share-your-trip', '/policies/privacy-policy', '/policies/terms-conditions'];
+const STATIC = ['/', '/packages', '/upcoming-trips', '/destinations', '/blog', '/about', '/book-a-trip', '/share-your-trip', '/policies/privacy-policy', '/policies/terms-conditions'];
 
 export async function getServerSideProps({ req, res }) {
   const base = (process.env.NEXT_PUBLIC_SITE_URL || `https://${req.headers.host}`).replace(/\/$/, '');

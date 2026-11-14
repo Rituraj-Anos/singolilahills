@@ -42,6 +42,7 @@ git push -u origin main
    - `SUPABASE_SECRET_KEY` (secret: never prefix it with `NEXT_PUBLIC_`)
    - Where to find these three values: `ADMIN-GUIDE.md`, Part C.
    - optional: `RESEND_API_KEY`, `NOTIFY_EMAIL`
+   - recommended before launch: `NEXT_PUBLIC_MAP_TILES` and `NEXT_PUBLIC_MAP_ATTRIBUTION` for the trip route maps. Without them the maps use the public OpenStreetMap tiles, which are fine for testing but are not meant for a busy commercial site. A free MapTiler account (cloud.maptiler.com) gives a key; then use `https://api.maptiler.com/maps/outdoor-v2/{z}/{x}/{y}.png?key=YOUR_KEY` and the attribution `&copy; MapTiler &copy; OpenStreetMap contributors`. Redeploy after adding them.
 4. Deploy. If you used a temporary address, change `NEXT_PUBLIC_SITE_URL` to the real domain and redeploy.
 5. Supabase > Authentication > URL configuration: set the Site URL to the live address and add `https://YOUR-SITE/admin/reset` to the Redirect URLs, so password-reset emails work.
 6. Custom domain: Vercel > Settings > Domains, then follow the DNS steps.

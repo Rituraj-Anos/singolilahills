@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Icon from './Icon.jsx';
 import Pic from './Pic.jsx';
-import { dateLabel, money } from '../lib/format.js';
+import { dateLabel, money, monthsLabel } from '../lib/format.js';
 
 export function TripCard({ pkg, headingLevel = 3 }) {
   const H = `h${headingLevel}`;
@@ -41,6 +41,60 @@ export function DestCard({ dest }) {
           <strong>{dest.name}</strong>
         </span>
       </Link>
+  );
+}
+
+// One thing to do at a destination. With `href` the whole card is a link; with `trips` it lists the trips
+// that include it as links instead (a link can't sit inside another link).
+export function ExperienceCard({ exp, href, trips = [], headingLevel = 3 }) {
+  const H = `h${headingLevel}`;
+  const when = monthsLabel(exp.best_months);
+  const body = (
+    <>
+      <span className="exp-photo">
+        {exp.image && <Pic src={exp.image} sizes="(max-width: 640px) 80vw, 360px" alt="" loading="lazy" decoding="async" width="720" height="540" />}
+      </span>
+      <span className="exp-body">
+        <span className="exp-meta">
+          {exp.duration && (
+            <span>
+              <Icon name="clock" />
+              {exp.duration}
+            </span>
+          )}
+          {when && (
+            <span>
+              <Icon name="calendar" />
+              {when}
+            </span>
+          )}
+        </span>
+        <H className="exp-title">{exp.title}</H>
+        {exp.summary && <span className="exp-summary">{exp.summary}</span>}
+      </span>
+    </>
+  );
+  if (href)
+    return (
+      <Link href={href} className="exp-card">
+        {body}
+      </Link>
+    );
+  return (
+    <article className="exp-card">
+      {body}
+      {trips.length > 0 && (
+        <p className="exp-trips">
+          <span>On </span>
+          {trips.map((t, i) => (
+            <span key={t.slug}>
+              {i > 0 && ', '}
+              <Link href={`/packages/${t.slug}`}>{t.title}</Link>
+            </span>
+          ))}
+        </p>
+      )}
+    </article>
   );
 }
 

@@ -15,7 +15,7 @@ export default function App({ Component, pageProps }) {
   // Admin screens bring their own shell; public pages get nav, footer and WhatsApp button.
   if (Component.admin || !pageProps.settings) return page;
   return (
-    <Layout settings={pageProps.settings} nav={pageProps.nav}>
+    <Layout settings={pageProps.settings} nav={pageProps.nav} popups={pageProps.popups}>
       {page}
     </Layout>
   );

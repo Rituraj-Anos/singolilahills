@@ -1,5 +1,10 @@
 import { clean, EMAIL_RE, notifyOwner, serviceClient } from '../../lib/server.js';
 import { INTERESTS, LENGTHS, TRAVELLERS, groupLabel, monthLabel } from '../../lib/planner.mjs';
+import { estimate, selectionText } from '../../lib/price.mjs';
+import { money } from '../../lib/format.js';
+import { answerText, cleanAnswer, customQuestions, withPlaces } from '../../lib/planner.mjs';
+import { dateRange } from '../../lib/departures.mjs';
+import { getDepartures, getDestinations, getPlannerQuestions } from '../../lib/content.js';
 
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -56,7 +61,69 @@ export default async function handler(req, res) {
     console.error('[enquiry] SUPABASE_SECRET_KEY or URL missing; enquiry not stored');
     return res.status(503).json({ error: 'Online enquiries are not set up yet. Please message us on WhatsApp.' });
   }
-  const { error } = await db.from('inquiries').insert(row);
+
+  // "Make it yours": the estimate is worked out again here from the saved trip prices.
+  // The browser only says which options were picked; its numbers are never used.
+  let priced = null;
+  const tripSlug = SLUG_RE.test(b.trip_slug || '') ? b.trip_slug : null;
+  if (tripSlug && b.selection && typeof b.selection === 'object') {
+    const { data: trip } = await db.from('packages').select('*').eq('slug', tripSlug).eq('published', true).maybeSingle();
+    if (trip?.show_customiser) {
+      const est = estimate(trip, b.selection);
+      priced = { trip, est };
+      Object.assign(row, {
+        trip_slug: tripSlug,
+        package_interest: trip.title,
+        adults: est.selection.adults,
+        children: est.selection.children,
+        group_size: groupLabel(est.selection.adults, est.selection.children),
+        selection: { ...est.selection, lines: est.lines },
+        estimate: est.total,
+      });
+    }
+  }
+
+  // A fixed date picked from a trip page: only a date that can still be booked is accepted.
+  let picked = null;
+  const depId = typeof b.departure_id === 'string' && /^[\w-]{1,64}$/.test(b.departure_id) ? b.departure_id : '';
+  if (depId) {
+    picked = (await getDepartures()).find((d) => d.id === depId) || null;
+    if (picked) {
+      Object.assign(row, {
+        departure_id: picked.id,
+        package_interest: picked.trip.title,
+        travel_dates: dateRange(picked.start_date, picked.end_date),
+        travel_month: `${picked.start_date.slice(0, 7)}-01`,
+      });
+    }
+  }
+
+  // The owner's own planner questions: each answer must fit its question (a known choice, a date, a number, short text).
+  const answers = [];
+  if (b.answers && typeof b.answers === 'object') {
+    const [qs, dests] = await Promise.all([getPlannerQuestions(), getDestinations()]);
+    for (const q of customQuestions(qs).map((x) => withPlaces(x, dests))) {
+      const v = cleanAnswer(q, b.answers[q.key]);
+      const text = v == null ? '' : answerText(q, v);
+      if (text) answers.push({ key: q.key, question: q.title.slice(0, 160), answer: text.slice(0, 500) });
+    }
+  }
+  if (answers.length) row.planner_answers = answers;
+
+  let { error } = await db.from('inquiries').insert(row);
+  // the database may not have the newer columns yet (migrations 07 and 09): keep the enquiry, with those details as text
+  const NEWER_COLS = ['trip_slug', 'selection', 'estimate', 'planner_answers', 'departure_id'];
+  if (error && NEWER_COLS.some((c) => (error.message || '').includes(c))) {
+    const rest = { ...row };
+    NEWER_COLS.forEach((c) => delete rest[c]);
+    const text = [
+      priced && selectionText(priced.trip, priced.est, (n) => money(n, priced.trip.currency || '₹')),
+      ...answers.map((a) => `${a.question}: ${a.answer}`),
+    ]
+      .filter(Boolean)
+      .join('\n');
+    ({ error } = await db.from('inquiries').insert({ ...rest, notes: [rest.notes, text].filter(Boolean).join('\n\n').slice(0, 1500) || null }));
+  }
   if (error) {
     console.error('[enquiry] insert failed:', error.message);
     return res.status(500).json({ error: 'We could not save your enquiry. Please try again or message us on WhatsApp.' });
@@ -75,6 +142,9 @@ export default async function handler(req, res) {
       `Who: ${[label(TRAVELLERS, row.travelling_with), row.group_size].filter(Boolean).join(', ') || '-'}`,
       `Budget per person: ${row.budget_label || '-'}`,
       `Interests: ${row.interests.map((i) => label(INTERESTS, i)).join(', ') || '-'}`,
+      priced ? `\n${selectionText(priced.trip, priced.est, (n) => money(n, priced.trip.currency || '₹'))}` : '',
+      picked ? `Date picked: ${dateRange(picked.start_date, picked.end_date)}, ${money(picked.price, picked.trip.currency)} per person` : '',
+      ...answers.map((a) => `${a.question}: ${a.answer}`),
       '',
       row.notes || '',
     ].join('\n')

@@ -1,9 +1,9 @@
 import Planner from '../components/Planner.jsx';
 import { Seo } from '../components/Layout.jsx';
-import { getDestinations, getPackages, pageProps } from '../lib/content.js';
+import { getDepartures, getDestinations, getPackages, getPlannerQuestions, pageProps } from '../lib/content.js';
 import { telLink, waLink } from '../lib/format.js';
 
-export default function BookATrip({ settings: s, trips, destinations }) {
+export default function BookATrip({ settings: s, trips, destinations, questions, departures }) {
   const wa = waLink(s.whatsapp, `Hi ${s.brand_name}, I would like to plan a trip.`);
   const tel = telLink(s.phone);
 
@@ -11,8 +11,8 @@ export default function BookATrip({ settings: s, trips, destinations }) {
     <>
       <Seo settings={s} title="Plan a trip" description="Tell us where, when and who. We suggest trips that fit, then reply with a day-by-day route and a price per person." />
       <header className="page-head container">
-        <h1>Plan your trip in a minute.</h1>
-        <p className="lead">Five quick questions, then trips that fit and a reply from our team with a route and a price per person.</p>
+        <h1>{s.planner_title || 'Plan your trip in a minute.'}</h1>
+        {s.planner_intro && <p className="lead">{s.planner_intro}</p>}
       </header>
 
       <section className="container" style={{ paddingBottom: 'var(--sp-9)' }}>
@@ -53,7 +53,7 @@ export default function BookATrip({ settings: s, trips, destinations }) {
           </div>
 
           <div className="form-card">
-            <Planner settings={s} trips={trips} destinations={destinations} />
+            <Planner settings={s} trips={trips} destinations={destinations} questions={questions} departures={departures} />
           </div>
         </div>
       </section>
@@ -62,7 +62,8 @@ export default function BookATrip({ settings: s, trips, destinations }) {
 }
 
 export async function getStaticProps() {
-  const [packages, dests] = await Promise.all([getPackages(), getDestinations()]);
+  const [packages, dests, questions] = await Promise.all([getPackages(), getDestinations(), getPlannerQuestions()]);
+  const departures = (await getDepartures({ packages })).map((d) => ({ id: d.id, trip_slug: d.trip_slug, trip_title: d.trip.title, start_date: d.start_date, end_date: d.end_date, price: d.price }));
   const trips = packages.map((p) => ({
     slug: p.slug,
     title: p.title,
@@ -76,5 +77,5 @@ export async function getStaticProps() {
     interests: p.interests || [],
   }));
   const destinations = dests.map((d) => ({ slug: d.slug, name: d.name, hero_image: d.hero_image, circuits: d.circuits || [] }));
-  return pageProps({ trips, destinations });
+  return pageProps({ trips, destinations, questions, departures });
 }

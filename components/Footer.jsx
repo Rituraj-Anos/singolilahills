@@ -75,6 +75,9 @@ export default function Footer({ settings: s, destinations = [] }) {
               <li>
                 <Link href="/packages">All trips</Link>
               </li>
+              <li>
+                <Link href="/upcoming-trips">Upcoming trips</Link>
+              </li>
               {destinations.slice(0, 4).map((d) => (
                 <li key={d.slug}>
                   <Link href={`/destinations/${d.slug}`}>{d.name}</Link>

@@ -10,13 +10,28 @@ import ThemeToggle from '../ThemeToggle.jsx';
 const AdminCtx = createContext(null);
 export const useAdmin = () => useContext(AdminCtx);
 
+const section = (name) => Object.entries(COLLECTIONS).filter(([, c]) => c.section === name).map(([key, c]) => ({ href: `/admin/${key}`, label: c.label }));
 const NAV = [
-  { href: '/admin', label: 'Overview' },
-  { href: '/admin/enquiries', label: 'Enquiries' },
-  ...Object.entries(COLLECTIONS).map(([key, c]) => ({ href: `/admin/${key}`, label: c.label })),
-  { href: '/admin/review-requests', label: 'Review requests' },
-  { href: '/admin/subscribers', label: 'Subscribers' },
-  { href: '/admin/settings', label: 'Site settings' },
+  { items: [{ href: '/admin', label: 'Overview' }] },
+  {
+    title: 'Business',
+    items: [
+      { href: '/admin/enquiries', label: 'Enquiries' },
+      { href: '/admin/clients', label: 'Clients' },
+      { href: '/admin/invoices', label: 'Invoices' },
+      ...section('business'),
+      { href: '/admin/invoice-settings', label: 'Invoice settings' },
+    ],
+  },
+  {
+    title: 'Website',
+    items: [
+      ...section('website'),
+      { href: '/admin/review-requests', label: 'Review requests' },
+      { href: '/admin/subscribers', label: 'Subscribers' },
+      { href: '/admin/settings', label: 'Site settings' },
+    ],
+  },
 ];
 
 function NotConfigured() {
@@ -104,15 +119,20 @@ export default function AdminShell({ title, actions, children }) {
             </span>
           </Link>
           <nav aria-label="Admin">
-            <ul>
-              {NAV.map((n) => (
-                <li key={n.href}>
-                  <Link href={n.href} aria-current={current(n.href) ? 'page' : undefined}>
-                    {n.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {NAV.map((g, gi) => (
+              <div key={g.title || gi} className="adm-nav-group">
+                {g.title && <p className="adm-nav-title">{g.title}</p>}
+                <ul>
+                  {g.items.map((n) => (
+                    <li key={n.href}>
+                      <Link href={n.href} aria-current={current(n.href) ? 'page' : undefined}>
+                        {n.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </nav>
           <div className="adm-side-foot">
             <ThemeToggle className="adm-theme-btn" />

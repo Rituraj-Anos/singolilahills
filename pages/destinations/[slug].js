@@ -2,12 +2,12 @@ import Link from 'next/link';
 import Icon from '../../components/Icon.jsx';
 import Pic from '../../components/Pic.jsx';
 import Slider from '../../components/Slider.jsx';
-import { TripCard } from '../../components/Cards.jsx';
+import { ExperienceCard, TripCard } from '../../components/Cards.jsx';
 import { Seo } from '../../components/Layout.jsx';
 import { CtaWindow } from '../../components/Sections.jsx';
-import { getDestination, getDestinations, getPackages, pageProps } from '../../lib/content.js';
+import { getDestination, getDestinations, getExperiences, getPackages, pageProps } from '../../lib/content.js';
 
-export default function Destination({ settings, dest, trips }) {
+export default function Destination({ settings, dest, trips, experiences, tripTitles }) {
   const facts = [
     ['Best time', dest.best_time],
     ['Altitude', dest.altitude],
@@ -73,6 +73,20 @@ export default function Destination({ settings, dest, trips }) {
         </div>
       </section>
 
+      {experiences.length > 0 && (
+        <section className="section-tight container" id="things-to-do" aria-labelledby="dest-do">
+          <div className="section-head">
+            <h2 id="dest-do">What you can do here</h2>
+            <p>Each one is part of at least one of our trips. Ask us to add any of them to yours.</p>
+          </div>
+          <div className="exp-grid">
+            {experiences.map((e) => (
+              <ExperienceCard key={e.slug} exp={e} trips={(e.trips || []).map((slug) => ({ slug, title: tripTitles[slug] })).filter((t) => t.title)} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {trips.length > 0 && (
         <section className="section-tight container" aria-labelledby="dest-trips">
           <Slider label="Trips that go here" cols={3} head={<h2 id="dest-trips">Trips that go here</h2>}>
@@ -95,7 +109,9 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
   const dest = await getDestination(params.slug);
   if (!dest) return { notFound: true, revalidate: 60 };
-  const all = await getPackages();
+  const [all, allExperiences] = await Promise.all([getPackages(), getExperiences()]);
   const trips = all.filter((p) => (dest.circuits || []).includes(p.slug));
-  return pageProps({ dest, trips });
+  const experiences = allExperiences.filter((e) => e.destination === dest.slug);
+  const tripTitles = Object.fromEntries(all.map((p) => [p.slug, p.title]));
+  return pageProps({ dest, trips, experiences, tripTitles });
 }

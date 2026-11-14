@@ -1,9 +1,15 @@
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Icon from './Icon.jsx';
 import Pic from './Pic.jsx';
 
-const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const QUERY = '(prefers-reduced-motion: reduce)';
+const reduced = () => typeof window !== 'undefined' && window.matchMedia(QUERY).matches;
+const onMotionChange = (cb) => {
+  const m = window.matchMedia(QUERY);
+  m.addEventListener('change', cb);
+  return () => m.removeEventListener('change', cb);
+};
 
 /*
   Centre-focus carousel for the destinations.
@@ -11,6 +17,7 @@ const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefe
   or the left/right keys. It steps by itself while on screen (paused on hover, focus, touch, a hidden tab
   and with reduced motion). The cards fan out from the centre the first time the section scrolls into view.
   Every card is a real link, so it also works before the page's scripts have loaded.
+  With reduced motion it is a plain row you swipe or scroll, with the arrows moving it one card at a time.
 */
 export default function DestCarousel({ items, title, titleId, actions, auto = 5200 }) {
   const n = items.length;
@@ -22,8 +29,20 @@ export default function DestCarousel({ items, title, titleId, actions, auto = 52
   const hold = useRef({ hover: false, focus: false, until: 0 });
   const drag = useRef(null);
   const moved = useRef(false);
+  const list = useRef(null);
+  const still = useSyncExternalStore(onMotionChange, reduced, () => false);
 
-  const step = useCallback((d) => setActive((a) => (a + d + n) % n), [n]);
+  const turn = useCallback((d) => setActive((a) => (a + d + n) % n), [n]);
+  // in the still row the arrows scroll by one card instead
+  const step = useCallback(
+    (d) => {
+      if (!still) return turn(d);
+      const el = list.current;
+      const card = el?.querySelector('.dc-card');
+      if (el && card) el.scrollBy({ left: d * (card.getBoundingClientRect().width + 16), behavior: 'auto' });
+    },
+    [still, turn]
+  );
   const pause = () => (hold.current.until = Date.now() + 9000);
 
   // fan the cards out the first time the section is on screen
@@ -84,7 +103,7 @@ export default function DestCarousel({ items, title, titleId, actions, auto = 52
   const half = Math.floor(n / 2);
   const offset = (i) => ((i - active + n + half) % n) - half;
 
-  const cls = ['dc', seen && 'is-in', settled && 'is-settled'].filter(Boolean).join(' ');
+  const cls = ['dc', seen && 'is-in', settled && 'is-settled', still && 'is-still'].filter(Boolean).join(' ');
   return (
     <div
       ref={root}
@@ -115,18 +134,19 @@ export default function DestCarousel({ items, title, titleId, actions, auto = 52
         </div>
       </div>
 
-      <div className="dc-stage" onPointerDown={down} onPointerUp={up} onPointerCancel={() => (drag.current = null)}>
-        <ul className="dc-list">
+      <div className="dc-stage" onPointerDown={still ? undefined : down} onPointerUp={still ? undefined : up} onPointerCancel={() => (drag.current = null)} onTouchStart={pause}>
+        <ul className="dc-list" ref={list}>
           {items.map((d, i) => {
             const o = offset(i);
             const a = Math.abs(o);
-            const here = o === 0;
+            const here = still || o === 0;
             const trips = d.circuits?.length || 0;
+            const things = d.things || 0;
             return (
               <li
                 key={d.slug}
-                className={`dc-card${here ? ' is-active' : ''}${a > 2 ? ' is-far' : ''}`}
-                style={{ '--o': seen ? o : 0, '--a': seen ? Math.min(a, 3) : 0, '--e': settled ? 0 : a * 110 }}
+                className={`dc-card${here ? ' is-active' : ''}${!still && a > 2 ? ' is-far' : ''}`}
+                style={{ '--o': o, '--a': Math.min(a, 3), '--e': settled ? 0 : a * 110 }}
                 aria-roledescription="slide"
                 aria-label={`${i + 1} of ${n}`}
               >
@@ -146,9 +166,9 @@ export default function DestCarousel({ items, title, titleId, actions, auto = 52
                 >
                   <Pic src={d.hero_image} sizes="(max-width: 640px) 72vw, 340px" alt="" loading="lazy" decoding="async" width="640" height="864" draggable={false} />
                   <span className="dc-shade" aria-hidden="true" />
-                  {trips > 0 && (
+                  {(trips > 0 || things > 0) && (
                     <span className="dc-chip">
-                      {trips} {trips === 1 ? 'trip' : 'trips'}
+                      {[trips > 0 && `${trips} ${trips === 1 ? 'trip' : 'trips'}`, things > 0 && `${things} things to do`].filter(Boolean).join(' · ')}
                     </span>
                   )}
                   <span className="dc-caption">
@@ -166,7 +186,7 @@ export default function DestCarousel({ items, title, titleId, actions, auto = 52
         </ul>
       </div>
 
-      {n > 1 && (
+      {n > 1 && !still && (
         <div className="dc-dots" role="group" aria-label="Choose a destination">
           {items.map((d, i) => (
             <button key={d.slug} type="button" className={i === active ? 'is-on' : ''} aria-label={d.name} aria-current={i === active ? 'true' : undefined} onClick={() => (pause(), setActive(i))} />

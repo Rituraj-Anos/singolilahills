@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Nav from './Nav.jsx';
 import Footer from './Footer.jsx';
 import Icon from './Icon.jsx';
+import Popup from './Popup.jsx';
 import { waLink } from '../lib/format.js';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
@@ -61,7 +62,7 @@ export function Seo({ settings, title, description, image, type = 'website', jso
   );
 }
 
-export default function Layout({ settings, nav, children }) {
+export default function Layout({ settings, nav, popups, children }) {
   const { asPath } = useRouter();
   useReveal(asPath);
   const wa = waLink(settings.whatsapp, `Hi ${settings.brand_name}, I would like to plan a trip.`);
@@ -78,6 +79,7 @@ export default function Layout({ settings, nav, children }) {
           <Icon name="whatsapp" />
         </a>
       )}
+      <Popup popups={popups} whatsapp={settings.whatsapp} brand={settings.brand_name} />
     </>
   );
 }

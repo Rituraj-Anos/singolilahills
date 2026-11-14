@@ -4,12 +4,13 @@ import AdminShell, { useToast } from '../../components/admin/AdminShell.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { ENQUIRY_STATUSES } from '../../lib/admin/collections.js';
 import { download, toCsv } from '../../lib/admin/api.js';
-import { telLink, waLink } from '../../lib/format.js';
+import Link from 'next/link';
+import { money, telLink, waLink } from '../../lib/format.js';
 import { INTERESTS, LENGTHS, TRAVELLERS, monthLabel } from '../../lib/planner.mjs';
 
 const COLS = [
   'created_at', 'name', 'phone', 'email', 'package_interest', 'destinations', 'travel_dates', 'trip_length', 'group_size',
-  'travelling_with', 'budget_label', 'interests', 'matched_trips', 'notes', 'status', 'follow_up_on', 'admin_notes',
+  'travelling_with', 'budget_label', 'interests', 'matched_trips', 'estimate', 'planner_answers', 'notes', 'status', 'follow_up_on', 'admin_notes',
 ];
 
 const labelOf = (set, id) => set.find((x) => x.id === id)?.label || id;
@@ -28,6 +29,11 @@ function planRows(r) {
     ['Budget per person', r.budget_label],
     ['Interests', r.interests?.map((i) => labelOf(INTERESTS, i)).join(', ')],
     ['Trips suggested', r.matched_trips?.join(', ')],
+    ['Stays', r.selection?.stay_name],
+    ['Add-ons', r.selection?.addon_names?.join(', ')],
+    ['Estimate shown', r.estimate != null && money(r.estimate)],
+    ['Date picked', r.departure_id && r.travel_dates],
+    ...(Array.isArray(r.planner_answers) ? r.planner_answers.map((a) => [a.question, a.answer]) : []),
   ].filter(([, v]) => v);
 }
 
@@ -97,6 +103,29 @@ function Drawer({ item, repeats, onClose, onSaved, toast }) {
           </a>
         )}
       </div>
+      {item.client_id && (
+        <p className="adm-inline">
+          <Link href={`/admin/clients/${item.client_id}`} className="adm-link">
+            Open client record
+          </Link>
+          <Link href={`/admin/invoices/new?inquiry=${item.id}`} className="adm-btn adm-btn-quiet">
+            Create invoice
+          </Link>
+        </p>
+      )}
+      {item.selection?.lines?.length > 0 && (
+        <>
+          <p className="adm-label">Their &ldquo;Make it yours&rdquo; estimate</p>
+          <dl className="adm-dl adm-dl-tight">
+            {item.selection.lines.map((l) => (
+              <div key={l.label} style={{ display: 'contents' }}>
+                <dt>{l.label}</dt>
+                <dd>{money(l.amount)}</dd>
+              </div>
+            ))}
+          </dl>
+        </>
+      )}
       <dl className="adm-dl">
         <dt>Trip</dt>
         <dd>{item.package_interest || '-'}</dd>
@@ -226,6 +255,7 @@ function Enquiries() {
       destinations: (r.destinations || []).join('; '),
       interests: (r.interests || []).map((i) => labelOf(INTERESTS, i)).join('; '),
       matched_trips: (r.matched_trips || []).join('; '),
+      planner_answers: Array.isArray(r.planner_answers) ? r.planner_answers.map((a) => `${a.question}: ${a.answer}`).join('; ') : '',
       trip_length: r.trip_length ? labelOf(LENGTHS, r.trip_length) : '',
       travelling_with: r.travelling_with ? labelOf(TRAVELLERS, r.travelling_with) : '',
     }));

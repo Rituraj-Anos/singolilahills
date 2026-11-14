@@ -6,7 +6,11 @@ import Slider from '../../components/Slider.jsx';
 import { ReelCard, TripCard } from '../../components/Cards.jsx';
 import { Seo } from '../../components/Layout.jsx';
 import { AltitudeStrip, CtaWindow, FaqList } from '../../components/Sections.jsx';
-import { getPackage, getPackages, getReels, pageProps } from '../../lib/content.js';
+import Customiser from '../../components/Customiser.jsx';
+import RouteMap from '../../components/RouteMap.jsx';
+import { TripDates } from '../../components/Departures.jsx';
+import { dateRange } from '../../lib/departures.mjs';
+import { getDepartures, getPackage, getPackages, getReels, pageProps } from '../../lib/content.js';
 import { money, waLink } from '../../lib/format.js';
 
 function Ticks({ items, cross }) {
@@ -23,7 +27,7 @@ function Ticks({ items, cross }) {
   );
 }
 
-export default function Trip({ settings: s, pkg, related, reels }) {
+export default function Trip({ settings: s, pkg, related, reels, departures = [] }) {
   const wa = waLink(s.whatsapp, pkg.whatsapp_text || `Hi ${s.brand_name}, I am interested in ${pkg.title}. Please share availability.`);
   const facts = [
     ['Duration', pkg.duration_label],
@@ -97,6 +101,8 @@ export default function Trip({ settings: s, pkg, related, reels }) {
               </dl>
             )}
 
+            <TripDates departures={departures} currency={pkg.currency || '₹'} />
+
             <section className="trip-block" aria-labelledby="overview-title">
               <h2 id="overview-title">Overview</h2>
               <p className="prose">{pkg.overview}</p>
@@ -106,6 +112,8 @@ export default function Trip({ settings: s, pkg, related, reels }) {
                 </div>
               )}
             </section>
+
+            {pkg.itinerary?.length > 0 && <RouteMap itinerary={pkg.itinerary} />}
 
             {pkg.itinerary?.length > 0 && (
               <div className="trip-block">
@@ -118,7 +126,7 @@ export default function Trip({ settings: s, pkg, related, reels }) {
                 <h2 id="itinerary-title">Day by day</h2>
                 <div className="days">
                   {pkg.itinerary.map((d, i) => (
-                    <details key={d.day ?? i} className="day" open={i === 0}>
+                    <details key={d.day ?? i} id={`day-${d.day ?? i + 1}`} className="day" open={i === 0}>
                       <summary>
                         <span className="d">Day {d.day ?? i + 1}</span>
                         <span className="t">{d.title}</span>
@@ -138,6 +146,8 @@ export default function Trip({ settings: s, pkg, related, reels }) {
                 </div>
               </section>
             )}
+
+            {pkg.show_customiser && <Customiser pkg={pkg} settings={s} />}
 
             {(pkg.inclusions?.length > 0 || pkg.exclusions?.length > 0) && (
               <section className="trip-block two-col" aria-label="What the price covers">
@@ -175,8 +185,18 @@ export default function Trip({ settings: s, pkg, related, reels }) {
             <p className="from">From</p>
             <p className="amount">{money(pkg.price, pkg.currency)}</p>
             <p className="per">per person, {pkg.duration_label}</p>
+            {departures.length > 0 && (
+              <p className="next-date">
+                Next date: <a href="#dates">{dateRange(departures[0].start_date, departures[0].end_date)}</a>
+                {departures.length > 1 && ` and ${departures.length - 1} more`}
+              </p>
+            )}
             <div className="actions">
-              <ArrowButton href={`/book-a-trip?trip=${encodeURIComponent(pkg.slug)}`}>Enquire about this trip</ArrowButton>
+              {pkg.show_customiser ? (
+                <ArrowButton href="#make-it-yours">Price it your way</ArrowButton>
+              ) : (
+                <ArrowButton href={`/book-a-trip?trip=${encodeURIComponent(pkg.slug)}`}>Enquire about this trip</ArrowButton>
+              )}
               <Link href={`/packages/${pkg.slug}/itinerary?download=1`} className="btn-ghost">
                 Download itinerary (PDF)
               </Link>
@@ -234,8 +254,9 @@ export async function getStaticProps({ params }) {
   const pkg = await getPackage(params.slug);
   if (!pkg) return { notFound: true, revalidate: 60 };
   const [all, reels] = await Promise.all([getPackages(), getReels()]);
+  const departures = await getDepartures({ tripSlug: pkg.slug, packages: all });
   const related = all.filter((p) => p.slug !== pkg.slug && (p.region === pkg.region || p.featured)).slice(0, 3);
   const key = (pkg.destination || '').split(/[\s&,]/)[0].toLowerCase();
   const matching = reels.filter((r) => key && (r.destination || '').toLowerCase().includes(key)).slice(0, 4);
-  return pageProps({ pkg, related, reels: matching });
+  return pageProps({ pkg, related, reels: matching, departures });
 }

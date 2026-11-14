@@ -7,11 +7,12 @@
     "build": "next build",
     "start": "next start",
     "format": "prettier --write .",
-    "test": "node --test lib/match.test.mjs",
+    "test": "node --test lib/match.test.mjs lib/price.test.mjs lib/route.test.mjs lib/invoice.test.mjs",
     "make-admin": "node scripts/make-admin.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
+    "leaflet": "^1.9.4",
     "next": "^15.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

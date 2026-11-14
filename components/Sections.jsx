@@ -1,10 +1,55 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ArrowButton from './ArrowButton.jsx';
-import { TripCard } from './Cards.jsx';
+import { ExperienceCard, TripCard } from './Cards.jsx';
 import Pic from './Pic.jsx';
 import Slider from './Slider.jsx';
 import { metres } from '../lib/format.js';
+import { INTERESTS } from '../lib/planner.mjs';
+
+/* Things to do, filtered by the same interests as the trip planner. A chosen interest also links into the planner. */
+export function ExperienceRow({ experiences, title = 'What you can do out there', titleId = 'exp-title' }) {
+  const [interest, setInterest] = useState('');
+  const offered = useMemo(() => INTERESTS.filter((i) => experiences.some((e) => (e.interests || []).includes(i.id))), [experiences]);
+  const shown = interest ? experiences.filter((e) => (e.interests || []).includes(interest)) : experiences;
+  const label = offered.find((i) => i.id === interest)?.label;
+  if (!experiences.length) return null;
+  const filters = (
+    <div>
+      <h2 id={titleId}>{title}</h2>
+      <div className="exp-filters" role="group" aria-label="Filter by interest">
+        <button type="button" aria-pressed={!interest} onClick={() => setInterest('')}>
+          Everything
+        </button>
+        {offered.map((i) => (
+          <button key={i.id} type="button" aria-pressed={interest === i.id} onClick={() => setInterest(i.id)}>
+            {i.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+  return (
+    <>
+      <p className="sr-only" role="status" aria-live="polite">
+        {shown.length} things to do shown
+      </p>
+      {/* keyed so a new filter starts the row from the first card, with its slide-in */}
+      <Slider key={interest || 'all'} head={filters} label="Things to do" cols={3}>
+        {shown.map((e) => (
+          <ExperienceCard key={e.slug} exp={e} href={`/destinations/${e.destination}#things-to-do`} />
+        ))}
+      </Slider>
+      {interest && (
+        <p className="exp-plan">
+          <Link href={`/book-a-trip?i=${interest}`} className="text-link">
+            Plan a trip around {label.toLowerCase()}
+          </Link>
+        </p>
+      )}
+    </>
+  );
+}
 
 /* Infinite ticker. The list renders twice (second copy hidden from assistive tech) so the loop is seamless. */
 export function Ticker({ items, render, duration = 60, reverse, label }) {

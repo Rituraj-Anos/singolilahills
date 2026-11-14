@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import AdminShell, { useToast } from '../../../components/admin/AdminShell.jsx';
 import { supabase } from '../../../lib/supabase.js';
 import { COLLECTIONS, allFields } from '../../../lib/admin/collections.js';
-import { refreshPages } from '../../../lib/admin/api.js';
+import { dbMessage, refreshPages } from '../../../lib/admin/api.js';
 import { money } from '../../../lib/format.js';
 
 function cell(field, value, row) {
   if (field?.type === 'boolean') return <span className={`adm-pill ${value ? 's-booked' : 's-closed'}`}>{value ? 'Shown' : 'Hidden'}</span>;
-  if (field?.name === 'price') return money(value, row.currency);
+  if (field?.name === 'price' || field?.name === 'unit_price') return money(value, row.currency);
+  if (field?.name === 'tax_rate') return value == null ? '-' : `${value}%`;
   if (field?.type === 'date') return value ? new Date(value).toLocaleDateString('en-IN') : '-';
   return value ?? '-';
 }
@@ -30,7 +31,7 @@ function CollectionList() {
       .from(c.table)
       .select('*')
       .order(c.order[0], { ascending: c.order[1] })
-      .then(({ data, error }) => (error ? toast(error.message, true) : setRows(data)));
+      .then(({ data, error }) => (error ? toast(dbMessage(error, c.migration), true) : setRows(data)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 

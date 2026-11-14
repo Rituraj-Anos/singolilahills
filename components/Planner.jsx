@@ -12,44 +12,79 @@ import {
   TRAVELLERS,
   describePlan,
   monthOptions,
+  optionValue,
   parsePlan,
   planToText,
+  plannerScreens,
   serializePlan,
+  withPlaces,
 } from '../lib/planner.mjs';
+import { dateRange } from '../lib/departures.mjs';
 import { money, waLink } from '../lib/format.js';
 
 const toggle = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 const range = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
 
-const STEPS = [
-  { title: 'Where do you want to go?', hint: 'Pick one or more places. Skip this if you are not sure yet.' },
-  { title: 'When are you thinking of travelling?', hint: 'A rough month is enough.' },
-  { title: 'Who is coming?', hint: 'This helps us suggest the right pace and altitude.' },
-  { title: 'What is your budget per person?', hint: 'It covers transport, stays, permits and most meals on the route.' },
-  { title: 'What do you enjoy?', hint: 'Pick as many as you like.' },
-];
-
-function Pick({ type, name, checked, onChange, children }) {
+// Choices as pills, or as photo cards when any choice has a photo.
+function Choices({ name, items, multi, selected, onPick }) {
+  const isOn = (v) => (multi ? selected.includes(v) : selected === v);
+  if (items.some((it) => it.image))
+    return (
+      <div className="dest-picks">
+        {items.map((it) => (
+          <label key={it.value} className="dest-pick">
+            <input type={multi ? 'checkbox' : 'radio'} name={name} checked={isOn(it.value)} onChange={() => onPick(it.value)} />
+            {it.image ? <Pic src={it.image} sizes="(max-width: 640px) 46vw, 220px" alt="" loading="lazy" decoding="async" width="320" height="240" /> : <span className="dest-pick-blank" aria-hidden="true" />}
+            <span className="dest-pick-name">{it.label}</span>
+            <span className="dest-pick-tick" aria-hidden="true">
+              <Icon name="check" />
+            </span>
+          </label>
+        ))}
+      </div>
+    );
   return (
-    <label className="pick">
-      <input type={type} name={name} checked={checked} onChange={onChange} />
-      <span>{children}</span>
-    </label>
+    <div className="pick-row">
+      {items.map((it) => (
+        <label key={it.value} className="pick">
+          <input type={multi ? 'checkbox' : 'radio'} name={name} checked={isOn(it.value)} onChange={() => onPick(it.value)} />
+          <span>{it.label}</span>
+        </label>
+      ))}
+    </div>
   );
 }
 
-export default function Planner({ settings, trips, destinations }) {
+export default function Planner({ settings, trips, destinations, questions = [], departures = [] }) {
   const { isReady, query } = useRouter();
   const bands = settings.budget_bands?.length ? settings.budget_bands : DEFAULT_BUDGET_BANDS;
+  const screens = useMemo(() => plannerScreens(questions), [questions]);
   // the URL is only readable after hydration; the key remounts the planner with the saved answers
   const initial = useMemo(
-    () => parsePlan(isReady ? query : {}, { destinationSlugs: destinations.map((d) => d.slug), bandCount: bands.length, tripSlugs: trips.map((t) => t.slug) }),
+    () =>
+      parsePlan(isReady ? query : {}, {
+        destinationSlugs: destinations.map((d) => d.slug),
+        bandCount: bands.length,
+        tripSlugs: trips.map((t) => t.slug),
+        custom: screens.flat().filter((q) => !q.maps_to),
+        screens: screens.length,
+        departureIds: departures.map((d) => d.id),
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isReady]
   );
   return (
     <>
-      <PlannerInner key={isReady ? 'ready' : 'first'} initial={initial} settings={settings} trips={trips} destinations={destinations} bands={bands} />
+      <PlannerInner
+        key={isReady ? 'ready' : 'first'}
+        initial={initial}
+        settings={settings}
+        trips={trips}
+        destinations={destinations}
+        bands={bands}
+        screens={screens}
+        departures={departures}
+      />
       <noscript>
         <p className="notice bad">The planner needs JavaScript. You can still reach us on WhatsApp or by phone with the details on this page.</p>
       </noscript>
@@ -57,12 +92,15 @@ export default function Planner({ settings, trips, destinations }) {
   );
 }
 
-function PlannerInner({ initial, settings, trips, destinations, bands }) {
+function PlannerInner({ initial, settings, trips, destinations, bands, screens, departures }) {
   const router = useRouter();
-  const askedSlug = initial.trip;
+  const departure = departures.find((d) => d.id === initial.dep);
+  const askedSlug = departure?.trip_slug || initial.trip;
+  const total = screens.length;
   const [plan, setPlan] = useState(initial.plan);
-  const [step, setStep] = useState(initial.step);
+  const [step, setStep] = useState(Math.min(initial.step, total + 1));
   const [prefer, setPrefer] = useState('');
+  const [missing, setMissing] = useState({});
   const [send, setSend] = useState({ status: 'idle', msg: '', errors: {} });
   const months = useMemo(() => monthOptions(new Date()), []);
   const head = useRef(null);
@@ -77,28 +115,73 @@ function PlannerInner({ initial, settings, trips, destinations, bands }) {
     head.current?.focus();
   }, [step]);
 
+  const custom = useMemo(() => screens.flat().filter((q) => !q.maps_to).map((q) => withPlaces(q, destinations)), [screens, destinations]);
+  const screenOf = useMemo(() => {
+    const m = {};
+    screens.forEach((s, i) => s.forEach((q) => (m[q.maps_to || q.key] = i + 1)));
+    if (m.group && !m.travelling) m.travelling = m.group;
+    if (m.length && !m.month) m.month = m.length;
+    return m;
+  }, [screens]);
+
   const sync = (p, s) =>
-    router.replace({ pathname: router.pathname, query: serializePlan(p, s, askedSlug) }, undefined, { shallow: true, scroll: false });
+    router.replace({ pathname: router.pathname, query: serializePlan(p, s, initial.trip, initial.dep) }, undefined, { shallow: true, scroll: false });
   const update = (patch) => {
     const next = { ...plan, ...patch };
     setPlan(next);
     sync(next, step);
   };
+  const setAnswer = (key, v) => update({ answers: { ...plan.answers, [key]: v } });
   const go = (n) => {
+    setMissing({});
     setStep(n);
     sync(plan, n);
   };
 
-  const ctx = { destinations, bands };
+  const answered = (q) => {
+    switch (q.maps_to) {
+      case 'destinations':
+        return plan.destinations.length > 0;
+      case 'month':
+        return Boolean(plan.month);
+      case 'length':
+        return Boolean(plan.length);
+      case 'travelling':
+        return Boolean(plan.travelling);
+      case 'budget':
+        return plan.budget != null;
+      case 'interests':
+        return plan.interests.length > 0;
+      case 'group':
+        return true;
+      default: {
+        const v = plan.answers[q.key];
+        return Array.isArray(v) ? v.length > 0 : v != null && String(v).trim() !== '';
+      }
+    }
+  };
+  const next = () => {
+    const gaps = Object.fromEntries((screens[step - 1] || []).filter((q) => q.required && !answered(q)).map((q) => [q.key, 'Please answer this to continue.']));
+    setMissing(gaps);
+    if (Object.keys(gaps).length) return document.getElementById(`pq-${Object.keys(gaps)[0]}`)?.focus();
+    go(step + 1);
+  };
+
+  const ctx = { destinations, bands, screenOf, questions: custom };
   const matches = useMemo(() => rankTrips(trips, plan, destinations, bands), [trips, plan, destinations, bands]);
   const asked = trips.find((t) => t.slug === askedSlug);
   const options = [
-    ...(asked ? [{ trip: asked, reasons: ['You asked about this trip'], warnings: [] }] : []),
+    ...(asked ? [{ trip: asked, reasons: [departure ? 'The date you picked' : 'You asked about this trip'], warnings: [] }] : []),
     ...matches.filter((m) => m.trip.slug !== askedSlug),
   ];
   const choice = prefer || options[0]?.trip.slug || '__none';
   const chosenTrip = trips.find((t) => t.slug === choice);
-  const wa = waLink(settings.whatsapp, planToText(plan, ctx, { brand: settings.brand_name, tripTitles: options.map((o) => o.trip.title) }));
+  const useDate = departure && choice === departure.trip_slug;
+  const rows = [...(useDate ? [['Date', `${dateRange(departure.start_date, departure.end_date)}, ${departure.trip_title}`, null]] : []), ...describePlan(plan, ctx)];
+  const wa = waLink(
+    settings.whatsapp,
+    [planToText(plan, ctx, { brand: settings.brand_name, tripTitles: options.map((o) => o.trip.title) }), useDate && `- Date: ${dateRange(departure.start_date, departure.end_date)}`].filter(Boolean).join('\n')
+  );
 
   async function submit(e) {
     e.preventDefault();
@@ -119,6 +202,8 @@ function PlannerInner({ initial, settings, trips, destinations, bands }) {
       budget_label: plan.budget != null ? bands[plan.budget]?.label : '',
       interests: plan.interests,
       matched_trips: options.map((o) => o.trip.slug),
+      answers: plan.answers,
+      departure_id: useDate ? departure.id : '',
     };
     setSend({ status: 'busy', msg: '', errors: {} });
     try {
@@ -152,131 +237,155 @@ function PlannerInner({ initial, settings, trips, destinations, bands }) {
     );
   }
 
-  const actions = (
-    <div className="planner-actions">
-      {step > 1 && (
-        <button type="button" className="btn-ghost" onClick={() => go(step - 1)}>
-          Back
-        </button>
-      )}
-      <ArrowButton onClick={() => go(step + 1)}>{step === 5 ? 'See my trips' : 'Next'}</ArrowButton>
-    </div>
-  );
+  // One question's input. The matching questions keep their fixed choices; the owner can rename them.
+  const label = (q, id, fallback) => q.options.find((o) => optionValue(o) === id)?.label || fallback;
+  const image = (q, id) => q.options.find((o) => optionValue(o) === id)?.image || '';
+  function renderInput(q) {
+    const id = `pq-${q.key}`;
+    switch (q.maps_to) {
+      case 'destinations':
+        return (
+          <Choices
+            name={id}
+            multi
+            items={destinations.map((d) => ({ value: d.slug, label: d.name, image: d.hero_image }))}
+            selected={plan.destinations}
+            onPick={(v) => update({ destinations: toggle(plan.destinations, v) })}
+          />
+        );
+      case 'month':
+        return (
+          <div className="field">
+            <label htmlFor={id}>Month</label>
+            <select id={id} value={plan.month} onChange={(e) => update({ month: e.target.value })}>
+              <option value="">Not sure yet</option>
+              {months.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      case 'length':
+        return <Choices name={id} items={LENGTHS.map((l) => ({ value: l.id, label: label(q, l.id, l.label), image: image(q, l.id) }))} selected={plan.length} onPick={(v) => update({ length: v })} />;
+      case 'travelling':
+        return <Choices name={id} items={TRAVELLERS.map((t) => ({ value: t.id, label: label(q, t.id, t.label), image: image(q, t.id) }))} selected={plan.travelling} onPick={(v) => update({ travelling: v })} />;
+      case 'group':
+        return (
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor={id}>Adults</label>
+              <select id={id} value={plan.adults} onChange={(e) => update({ adults: Number(e.target.value) })}>
+                {range(1, 20).map((n) => (
+                  <option key={n}>{n}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor={`${id}-children`}>Children</label>
+              <select id={`${id}-children`} value={plan.children} onChange={(e) => update({ children: Number(e.target.value) })}>
+                {range(0, 10).map((n) => (
+                  <option key={n}>{n}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        );
+      case 'budget':
+        return (
+          <Choices
+            name={id}
+            items={[{ value: '', label: 'Not sure yet' }, ...bands.map((b, i) => ({ value: String(i), label: b.label }))]}
+            selected={plan.budget == null ? '' : String(plan.budget)}
+            onPick={(v) => update({ budget: v === '' ? null : Number(v) })}
+          />
+        );
+      case 'interests':
+        return (
+          <Choices
+            name={id}
+            multi
+            items={INTERESTS.map((i) => ({ value: i.id, label: label(q, i.id, i.label), image: image(q, i.id) }))}
+            selected={plan.interests}
+            onPick={(v) => update({ interests: toggle(plan.interests, v) })}
+          />
+        );
+      default:
+        break;
+    }
+    const cq = withPlaces(q, destinations);
+    const value = plan.answers[q.key];
+    if (cq.type === 'single' || cq.type === 'multi') {
+      const items = cq.options.map((o) => ({ value: optionValue(o), label: o.label, image: o.image }));
+      const multi = cq.type === 'multi';
+      return (
+        <Choices
+          name={id}
+          multi={multi}
+          items={items}
+          selected={multi ? (Array.isArray(value) ? value : []) : value || ''}
+          onPick={(v) => setAnswer(q.key, multi ? toggle(Array.isArray(value) ? value : [], v) : v)}
+        />
+      );
+    }
+    const common = { id, value: value ?? '', 'aria-invalid': missing[q.key] ? 'true' : undefined, 'aria-describedby': missing[q.key] ? `${id}-err` : undefined };
+    if (cq.type === 'number')
+      return <input {...common} className="pq-short" type="number" min="0" max="100000" inputMode="numeric" onChange={(e) => setAnswer(q.key, e.target.value)} aria-label={q.title} />;
+    if (cq.type === 'date') return <input {...common} className="pq-short" type="date" onChange={(e) => setAnswer(q.key, e.target.value)} aria-label={q.title} />;
+    return <textarea {...common} maxLength={500} onChange={(e) => setAnswer(q.key, e.target.value)} aria-label={q.title} />;
+  }
 
-  if (step <= 5) {
-    const s = STEPS[step - 1];
+  if (step <= total) {
+    const qs = screens[step - 1];
+    const [first, ...rest] = qs;
+    const renderBlock = (q, heading) => (
+      <div className="pq" role="group" aria-labelledby={heading ? 'planner-title' : `pq-${q.key}-t`}>
+        {!heading && (
+          <p className="label pq-title" id={`pq-${q.key}-t`}>
+            {q.title}
+            {q.required && <span aria-hidden="true"> *</span>}
+          </p>
+        )}
+        {!heading && q.help && <p className="planner-hint">{q.help}</p>}
+        {renderInput(q)}
+        {missing[q.key] && (
+          <p className="error" id={`pq-${q.key}-err`} role="alert">
+            {missing[q.key]}
+          </p>
+        )}
+      </div>
+    );
     return (
       <div className="planner">
         <div className="planner-top">
           <p>
-            Step {step} of 5
+            Step {step} of {total}
           </p>
-          <div className="planner-progress" role="progressbar" aria-valuemin={1} aria-valuemax={5} aria-valuenow={step} aria-label="Planner progress">
-            <span style={{ transform: `scaleX(${step / 5})` }} />
+          <div className="planner-progress" role="progressbar" aria-valuemin={1} aria-valuemax={total} aria-valuenow={step} aria-label="Planner progress">
+            <span style={{ transform: `scaleX(${step / total})` }} />
           </div>
         </div>
         <section aria-labelledby="planner-title">
           <h2 id="planner-title" ref={head} tabIndex={-1} className="planner-title">
-            {s.title}
+            {first.title}
+            {first.required && <span aria-hidden="true"> *</span>}
           </h2>
-          <p className="planner-hint">{s.hint}</p>
-
-          {step === 1 && (
-            <div className="dest-picks">
-              {destinations.map((d) => (
-                <label key={d.slug} className="dest-pick">
-                  <input type="checkbox" checked={plan.destinations.includes(d.slug)} onChange={() => update({ destinations: toggle(plan.destinations, d.slug) })} />
-                  <Pic src={d.hero_image} sizes="(max-width: 640px) 46vw, 220px" alt="" loading="lazy" decoding="async" width="320" height="240" />
-                  <span className="dest-pick-name">{d.name}</span>
-                  <span className="dest-pick-tick" aria-hidden="true">
-                    <Icon name="check" />
-                  </span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="form-grid">
-              <div className="field">
-                <label htmlFor="pl-month">Month</label>
-                <select id="pl-month" value={plan.month} onChange={(e) => update({ month: e.target.value })}>
-                  <option value="">Not sure yet</option>
-                  {months.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
-                <legend className="label">How long?</legend>
-                <div className="pick-row">
-                  {LENGTHS.map((l) => (
-                    <Pick key={l.id} type="radio" name="length" checked={plan.length === l.id} onChange={() => update({ length: l.id })}>
-                      {l.label}
-                    </Pick>
-                  ))}
-                </div>
-              </fieldset>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="form-grid">
-              <fieldset className="field full" style={{ border: 0, padding: 0, margin: 0 }}>
-                <legend className="label">Travelling as</legend>
-                <div className="pick-row">
-                  {TRAVELLERS.map((t) => (
-                    <Pick key={t.id} type="radio" name="travelling" checked={plan.travelling === t.id} onChange={() => update({ travelling: t.id })}>
-                      {t.label}
-                    </Pick>
-                  ))}
-                </div>
-              </fieldset>
-              <div className="field">
-                <label htmlFor="pl-adults">Adults</label>
-                <select id="pl-adults" value={plan.adults} onChange={(e) => update({ adults: Number(e.target.value) })}>
-                  {range(1, 20).map((n) => (
-                    <option key={n}>{n}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="pl-children">Children</label>
-                <select id="pl-children" value={plan.children} onChange={(e) => update({ children: Number(e.target.value) })}>
-                  {range(0, 10).map((n) => (
-                    <option key={n}>{n}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="pick-row">
-              <Pick type="radio" name="budget" checked={plan.budget == null} onChange={() => update({ budget: null })}>
-                Not sure yet
-              </Pick>
-              {bands.map((b, i) => (
-                <Pick key={b.label} type="radio" name="budget" checked={plan.budget === i} onChange={() => update({ budget: i })}>
-                  {b.label}
-                </Pick>
-              ))}
-            </div>
-          )}
-
-          {step === 5 && (
-            <div className="pick-row">
-              {INTERESTS.map((i) => (
-                <Pick key={i.id} type="checkbox" name="interests" checked={plan.interests.includes(i.id)} onChange={() => update({ interests: toggle(plan.interests, i.id) })}>
-                  {i.label}
-                </Pick>
-              ))}
-            </div>
-          )}
-
-          {actions}
+          {first.help && <p className="planner-hint">{first.help}</p>}
+          <div className="pq-stack">
+            {renderBlock(first, true)}
+            {rest.map((q) => (
+              <div key={q.key}>{renderBlock(q, false)}</div>
+            ))}
+          </div>
+          <div className="planner-actions">
+            {step > 1 && (
+              <button type="button" className="btn-ghost" onClick={() => go(step - 1)}>
+                Back
+              </button>
+            )}
+            <ArrowButton onClick={next}>{step === total ? 'See my trips' : 'Next'}</ArrowButton>
+          </div>
         </section>
       </div>
     );
@@ -289,13 +398,17 @@ function PlannerInner({ initial, settings, trips, destinations, bands }) {
           Your plan
         </h2>
         <dl className="plan-summary">
-          {describePlan(plan, ctx).map(([label, value, editStep]) => (
+          {rows.map(([label, value, editStep]) => (
             <div key={label}>
               <dt>{label}</dt>
               <dd>{value}</dd>
-              <button type="button" className="linklike" onClick={() => go(editStep)} aria-label={`Change ${label.toLowerCase()}`}>
-                Change
-              </button>
+              {editStep ? (
+                <button type="button" className="linklike" onClick={() => go(editStep)} aria-label={`Change ${label.toLowerCase()}`}>
+                  Change
+                </button>
+              ) : (
+                <span />
+              )}
             </div>
           ))}
         </dl>
@@ -317,7 +430,9 @@ function PlannerInner({ initial, settings, trips, destinations, bands }) {
                     <span className="match-body">
                       <strong>{trip.title}</strong>
                       <small>
-                        {trip.duration_label}, from {money(trip.price, trip.currency)} per person
+                        {departure && trip.slug === departure.trip_slug
+                          ? `${dateRange(departure.start_date, departure.end_date)}, ${money(departure.price, trip.currency)} per person`
+                          : `${trip.duration_label}, from ${money(trip.price, trip.currency)} per person`}
                       </small>
                       <span className="chips">
                         {reasons.slice(0, 3).map((r) => (
@@ -338,9 +453,10 @@ function PlannerInner({ initial, settings, trips, destinations, bands }) {
                   </Link>
                 </div>
               ))}
-              <Pick type="radio" name="prefer" checked={choice === '__none'} onChange={() => setPrefer('__none')}>
-                No preference, plan something for me
-              </Pick>
+              <label className="pick">
+                <input type="radio" name="prefer" checked={choice === '__none'} onChange={() => setPrefer('__none')} />
+                <span>No preference, plan something for me</span>
+              </label>
             </div>
           </fieldset>
 
@@ -375,9 +491,11 @@ function PlannerInner({ initial, settings, trips, destinations, bands }) {
               </p>
             )}
             <div className="full planner-actions">
-              <button type="button" className="btn-ghost" onClick={() => go(5)}>
-                Back
-              </button>
+              {total > 0 && (
+                <button type="button" className="btn-ghost" onClick={() => go(total)}>
+                  Back
+                </button>
+              )}
               <ArrowButton type="submit" disabled={send.status === 'busy'}>
                 {send.status === 'busy' ? 'Sending' : 'Send my plan'}
               </ArrowButton>
@@ -394,3 +512,4 @@ function PlannerInner({ initial, settings, trips, destinations, bands }) {
     </div>
   );
 }
+

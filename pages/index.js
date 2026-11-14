@@ -4,14 +4,15 @@ import Icon from '../components/Icon.jsx';
 import Pic from '../components/Pic.jsx';
 import DestCarousel from '../components/DestCarousel.jsx';
 import { PostCard, ReviewCard } from '../components/Cards.jsx';
-import { CtaWindow, FaqList, Statement, Ticker, TravelStyles, TripFinder } from '../components/Sections.jsx';
+import { CtaWindow, ExperienceRow, FaqList, Statement, Ticker, TravelStyles, TripFinder } from '../components/Sections.jsx';
 import { Seo } from '../components/Layout.jsx';
-import { getDestinations, getFaqs, getPackages, getPosts, getReviews, pageProps } from '../lib/content.js';
+import { getDepartures, getDestinations, getExperiences, getFaqs, getPackages, getPosts, getReviews, pageProps } from '../lib/content.js';
+import { DepartureCard } from '../components/Departures.jsx';
 import { money } from '../lib/format.js';
 
 const INCLUDED_ICONS = ['guide', 'stay', 'car', 'permit'];
 
-export default function Home({ settings: s, packages, destinations, posts, reviews, faqs }) {
+export default function Home({ settings: s, packages, destinations, experiences, departures = [], posts, reviews, faqs }) {
   const featured = packages.find((p) => p.featured) || packages[0];
   const half = Math.ceil(reviews.length / 2);
   const jsonLd = {
@@ -111,6 +112,28 @@ export default function Home({ settings: s, packages, destinations, posts, revie
               </Link>
             }
           />
+        </section>
+      )}
+
+      {departures.length > 0 && (
+        <section className="section-tight container" aria-labelledby="dep-title">
+          <div className="section-head">
+            <h2 id="dep-title">Upcoming departures</h2>
+            <Link href="/upcoming-trips" className="btn-ghost">
+              All dates
+            </Link>
+          </div>
+          <div className="dep-grid">
+            {departures.map((d) => (
+              <DepartureCard key={d.id} d={d} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {experiences.length > 0 && (
+        <section className="section-tight container" aria-labelledby="exp-title">
+          <ExperienceRow experiences={experiences} />
         </section>
       )}
 
@@ -217,12 +240,16 @@ export default function Home({ settings: s, packages, destinations, posts, revie
 }
 
 export async function getStaticProps() {
-  const [packages, destinations, posts, reviews, faqs] = await Promise.all([
+  const [packages, destinations, experiences, posts, reviews, faqs] = await Promise.all([
     getPackages(),
     getDestinations(),
+    getExperiences(),
     getPosts(),
     getReviews(),
     getFaqs(),
   ]);
-  return pageProps({ packages, destinations, posts, reviews, faqs });
+  // destination cards show how many things there are to do at each place
+  const counted = destinations.map((d) => ({ ...d, things: experiences.filter((e) => e.destination === d.slug).length }));
+  const departures = (await getDepartures({ packages })).slice(0, 6);
+  return pageProps({ packages, destinations: counted, experiences, departures, posts, reviews, faqs });
 }
